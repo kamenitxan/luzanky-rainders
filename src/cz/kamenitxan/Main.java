@@ -15,6 +15,7 @@ public class Main {
     private static ArrayList<Character> characters = new ArrayList<>();
 
     public static void main(String[] args) {
+        System.out.println("Běh zahájen");
         InputStream is = null;
         try{
             String host = "http://eu.battle.net/api/";

@@ -53,7 +53,8 @@ public class Generator {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-
+		/*ArrayList<Character> chars = (ArrayList<Character>) characters.clone();
+		chars.forEach(this::queryAPI);*/
 
 		generateHTML();
 
@@ -68,10 +69,12 @@ public class Generator {
 						"?fields=guild,items,titles,talents,professions");
 				is = url.openStream();
 			} catch (FileNotFoundException ex) {
-				System.out.println(ex.getLocalizedMessage());
-				System.out.println(ex.getMessage());
+				//System.out.println(ex.getLocalizedMessage());
+				//System.out.println(ex.getMessage());
 				String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
 				System.out.println(error);
+				characters.remove(character);
+				return;
 			} catch (IOException ex) {
 				String error = ex.getLocalizedMessage();
 				System.out.println("IOEX: " + error);
@@ -83,6 +86,9 @@ public class Generator {
 		// FIX: ošetření, když nejde internet
 		JsonReader jsonReader = Json.createReader(is);
 		JsonObject jsonObject = jsonReader.readObject();
+
+		System.out.println(jsonObject.toString());
+
 		JsonObject guild = jsonObject.getJsonObject("guild");
 		JsonObject items = jsonObject.getJsonObject("items");
 		JsonArray titles = jsonObject.getJsonArray("titles");
@@ -132,7 +138,7 @@ public class Generator {
 		character.setSecondaryProf(secondary_prof.getString("name"));
 		character.setSecondaryProfLvl(secondary_prof.getInt("rank"));
 
-		System.out.println(jsonObject.toString());
+		//System.out.println(jsonObject.toString());
 
 		if (character.getTitle() == null) {
 			character.setTitle("");
