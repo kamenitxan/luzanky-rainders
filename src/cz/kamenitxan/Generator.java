@@ -1,10 +1,13 @@
 package cz.kamenitxan;
 
 
+import com.googlecode.jatl.Html;
+
 import javax.json.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -30,6 +33,8 @@ public class Generator {
 	private int atanks = 0;
 	private int aheals = 0;
 	private int adpss = 0;
+
+	private int timeOuts = 0;
 
 	public Generator(ArrayList<Character> characters) {
 		this.characters = characters;
@@ -67,7 +72,10 @@ public class Generator {
 				String host = "http://eu.battle.net/api/";
 				URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName() +
 						"?fields=guild,items,titles,talents,professions");
-				is = url.openStream();
+				HttpURLConnection con = (HttpURLConnection) url.openConnection();
+				con.setReadTimeout(1500); //1,5 vteřiny
+
+				is = con.getInputStream();
 			} catch (FileNotFoundException ex) {
 				//System.out.println(ex.getLocalizedMessage());
 				//System.out.println(ex.getMessage());
@@ -77,7 +85,10 @@ public class Generator {
 				return;
 			} catch (IOException ex) {
 				String error = ex.getLocalizedMessage();
-				System.out.println("IOEX: " + error);
+				System.out.println("IOEX "+ character.getName() + ": " + error);
+				if (error.contains("Read timed out")) {
+					timeOuts++;
+				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -147,55 +158,71 @@ public class Generator {
 
 
 	private void generateHTML() {
-		Collections.sort(characters);
-		Collections.reverse(characters);
-		StringBuilder sb = new StringBuilder();
-		sb.append("<html><head><meta charset=\"UTF-8\"><title>Raiders of Luzanky</title>" +
-				"<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css\">" +
-				"<style type=\"text/css\">.table-striped>tbody>tr:nth-child(odd) {background-color: rgb(28, 28, 28) !important;} " +
-				".table {width: auto;} </style>" +
-				"</head>" +
-				"<body style=\"color: white; background-color: black; \">");
-		sb.append("<h1>Seznam raiderů Lužánek</h1><table class=\"table table-striped table-condensed\">");
-		sb.append("<thead><tr><td>Jméno</td><td>Povolání</td><td>Spec</td><td>Off-Spec</td><td>iLVL</td><td>Rank</td></tr></thead>");
-		for (Character ch : characters) {
-			if (ch.getIlvl() > 615) {
-				if (lists.getRole(ch.getSpec()) == 1) {
-					tanks += 1;
-				}
-				if (lists.getRole(ch.getSpec()) == 2) {
-					heals += 1;
-				}
-				if (lists.getRole(ch.getSpec()) == 3) {
-					dpss += 1;
-				}
-				if (lists.getRole(ch.getAltSpec()) == 1) {
-					atanks += 1;
-				}
-				if (lists.getRole(ch.getAltSpec()) == 2) {
-					aheals += 1;
-				}
-				if (lists.getRole(ch.getAltSpec()) == 3) {
-					adpss += 1;
-				}
-			}
-			if (ch.getIlvl() > 615) {
-				sb.append("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\" ><td>"
-						+ ch.getName()
-						+ "</td><td>"
-						+ lists.getPClass(ch.getPlayerClass()) + "</td><td>"
-						+ "<img src=\"img/" + lists.getRole(ch.getSpec()) + ".png\"> "
-						+ ch.getSpec() + "</td><td>"
-						+ "<img src=\"img/" + lists.getRole(ch.getAltSpec()) + ".png\"> "
-						+ ch.getAltSpec() + "</td><td>" + ch.getIlvl() + "</td><td>" + lists.getRank(ch.getRank()) + "</td>") ;
-				//System.out.println(ch.getName());
-			}
-		}
-		sb.append("</table><p>Tanků: " + tanks + " (" + (tanks + atanks) + ")<br>" +
-				"Healů: " + heals + " (" + (heals + aheals) + ")<br>" +
-				"DPS: " + dpss + " (" + (dpss + adpss) +")</p>" +
-				"</body></html>");
+//		Collections.sort(characters);
+//		Collections.reverse(characters);
+//		StringBuilder sb = new StringBuilder();
+//		sb.append("<html><head><meta charset=\"UTF-8\"><title>Raiders of Luzanky</title>" +
+//				"<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css\">" +
+//				"<style type=\"text/css\">.table-striped>tbody>tr:nth-child(odd) {background-color: rgb(28, 28, 28) !important;} " +
+//				".table {width: auto;} </style>" +
+//				"</head>" +
+//				"<body style=\"color: white; background-color: black; \">");
+//		sb.append("<h1>Seznam raiderů Lužánek</h1><table class=\"table table-striped table-condensed\">");
+//		sb.append("<thead><tr><td>Jméno</td><td>Povolání</td><td>Spec</td><td>Off-Spec</td><td>iLVL</td><td>Rank</td></tr></thead>");
 
+		StringWriter sw = new StringWriter();
+		StringWriter writer = sw;
+		Html html = new Html(sw);
+
+		html.html();
+			html.head();
+				html.meta().charset("UTF-8");
+				html.title().text("Raiders of Luzanky").end();
+				html.link().rel("stylesheet").href("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css");
+				html.style().raw(".table-striped>tbody>tr:nth-child(odd) {background-color: rgb(28, 28, 28) !important;}").end();
+			html.body().style("color: white; background-color: black;");
+				html.h1().text("Seznam raiderů Lužánek").end();
+				html.raw("<table class=\"table table-striped table-condensed\"><thead><tr><td>Jméno</td><td>Povolání</td><td>Spec</td><td>Off-Spec</td><td>iLVL</td><td>Rank</td></tr></thead>");
+
+
+
+				for (Character ch : characters) {
+					if (ch.getIlvl() > 615) {
+						if (lists.getRole(ch.getSpec()) == 1) {
+							tanks += 1;
+						}
+						if (lists.getRole(ch.getSpec()) == 2) {
+							heals += 1;
+						}
+						if (lists.getRole(ch.getSpec()) == 3) {
+							dpss += 1;
+						}
+						if (lists.getRole(ch.getAltSpec()) == 1) {
+							atanks += 1;
+						}
+						if (lists.getRole(ch.getAltSpec()) == 2) {
+							aheals += 1;
+						}
+						if (lists.getRole(ch.getAltSpec()) == 3) {
+							adpss += 1;
+						}
+					}
+					if (ch.getIlvl() > 615) {
+						html.raw("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\" ><td>"
+								+ ch.getName()
+								+ "</td><td>"
+								+ lists.getPClass(ch.getPlayerClass()) + "</td><td>"
+								+ "<img src=\"img/" + lists.getRole(ch.getSpec()) + ".png\"> "
+								+ ch.getSpec() + "</td><td>"
+								+ "<img src=\"img/" + lists.getRole(ch.getAltSpec()) + ".png\"> "
+								+ ch.getAltSpec() + "</td><td>" + ch.getIlvl() + "</td><td>" + lists.getRank(ch.getRank()) + "</td>") ;
+						//System.out.println(ch.getName());
+					}
+				}
+				html.raw("</table>");
+				html.p().text("Tanků: " + tanks + " (" + (tanks + atanks) + ")").br()
+				.text("Healů: " + heals + " (" + (heals + aheals) + ")").br()
+						.text("DPS: " + dpss  + " (" + (dpss +  adpss)  + ")").br();
 
 		DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 		Date today = Calendar.getInstance().getTime();
@@ -203,9 +230,27 @@ public class Generator {
 
 		double cas = (System.nanoTime() - Main.startTime) / 1000000000;
 
-		sb.append("<p>Generováno " + reportDate + ". Export trval " + cas + " s");
+				html.p().text("Generováno " + reportDate + ". Export trval " + cas + " s");
+				html.p().text("Timeouts: " + timeOuts);
+				html.endAll();
+
+//		sb.append("</table><p>Tanků: " + tanks + " (" + (tanks + atanks) + ")<br>" +
+//				"Healů: " + heals + " (" + (heals + aheals) + ")<br>" +
+//				"DPS: " + dpss + " (" + (dpss + adpss) +")</p>" +
+//				"</body></html>");
+//
+//
+//		DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+//		Date today = Calendar.getInstance().getTime();
+//		String reportDate = df.format(today);
+//
+//		double cas = (System.nanoTime() - Main.startTime) / 1000000000;
+//
+//		sb.append("<p>Generováno " + reportDate + ". Export trval " + cas + " s");
+
+		String result = writer.getBuffer().toString();
 		try {
-			Files.write(Paths.get("raiders.html"), sb.toString().getBytes());
+			Files.write(Paths.get("raiders.html"), result.getBytes());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
