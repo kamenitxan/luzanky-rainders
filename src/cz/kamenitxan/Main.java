@@ -17,39 +17,43 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("Běh zahájen");
         InputStream is = null;
-        try{
-            String host = "http://eu.battle.net/api/";
-            URL url = new URL(host + "wow/guild/" + realm + "/" + guildName +
-                    "?fields=members");
-            is = url.openStream();
-        } catch (FileNotFoundException ex) {
-            System.out.println(ex.getLocalizedMessage());
-            System.out.println(ex.getMessage());
-            String error = "Postava  na serveru nenalezena";
-            System.out.println(error);
-        } catch (IOException ex) {
-            String error = ex.getLocalizedMessage();
-            System.out.println(error);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        while (is == null) {
+            try {
+                String host = "http://eu.battle.net/api/";
+                URL url = new URL(host + "wow/guild/" + realm + "/" + guildName +
+                        "?fields=members");
+                is = url.openStream();
+            } catch (FileNotFoundException ex) {
+                System.out.println(ex.getLocalizedMessage());
+                System.out.println(ex.getMessage());
+                String error = "Postava  na serveru nenalezena";
+                System.out.println(error);
+            } catch (IOException ex) {
+                String error = ex.getLocalizedMessage();
+                System.out.println(error);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
 
         JsonReader jsonReader = Json.createReader(is);
         JsonObject jsonObject = jsonReader.readObject();
         JsonArray members = jsonObject.getJsonArray("members");
 
-        for (JsonValue chars : members) {
-            JsonObject character = (JsonObject) chars;
-            int rank = character.getInt("rank");
-            character = character.getJsonObject("character");
-            if (character.getInt("level") == 100) {
-                characters.add(new Character(realm, character.getString("name"), rank));
-            }
-        }
+        members.forEach(m -> addChar(m));
 
         System.out.println(jsonObject.toString());
 
         new Generator(characters).getData();
+    }
+
+    private static void addChar(JsonValue ch) {
+        JsonObject character = (JsonObject) ch;
+        int rank = character.getInt("rank");
+        character = character.getJsonObject("character");
+        if (character.getInt("level") == 100) {
+            characters.add(new Character(realm, character.getString("name"), rank));
+        }
     }
 
     public ArrayList<Character> getCharacters() {
