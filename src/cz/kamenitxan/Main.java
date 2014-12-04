@@ -1,6 +1,7 @@
 package cz.kamenitxan;
 
 import javax.json.*;
+import javax.json.stream.JsonParsingException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,13 +9,22 @@ import java.net.URL;
 import java.util.ArrayList;
 
 public class Main {
-    private static final String guildName = "Luzanky";
-    private static final String realm = "Thunderhorn";
+    private static String guildName = "Luzanky";
+    private static String realm = "Thunderhorn";
     public static final double startTime = System.nanoTime();
 
     private static ArrayList<Character> characters = new ArrayList<>();
 
+    /**
+     * Example "java -jar Luzanky Thunderhorn"
+     * @param args name of guild and server
+     */
     public static void main(String[] args) {
+        if (args.length != 0) {
+            guildName = args[0];
+            realm = args[1];
+        }
+
         System.out.println("Běh zahájen");
         InputStream is = null;
         while (is == null) {
@@ -35,9 +45,16 @@ public class Main {
                 ex.printStackTrace();
             }
         }
+        JsonReader jsonReader;
+        JsonObject jsonObject = null;
+        try{
+            jsonReader = Json.createReader(is);
+            jsonObject = jsonReader.readObject();
+        } catch (JsonParsingException ex) {
+            ex.getMessage();
+            System.out.println(is.toString());
+        }
 
-        JsonReader jsonReader = Json.createReader(is);
-        JsonObject jsonObject = jsonReader.readObject();
         JsonArray members = jsonObject.getJsonArray("members");
 
         members.forEach(m -> addChar(m));

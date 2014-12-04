@@ -1,6 +1,5 @@
 package cz.kamenitxan;
 
-
 import com.googlecode.jatl.Html;
 import javax.json.*;
 import java.io.FileNotFoundException;
@@ -83,6 +82,7 @@ public class Generator {
 				if (error.contains("Read timed out")) {
 					timeOuts++;
 				}
+				Thread.yield();
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -240,11 +240,13 @@ public class Generator {
 		} else if (lists.getRole(ch.getSpec()) == 1) {
 			tanks += 1;
 		}
-		if (lists.getRole(ch.getAltSpec()) == 3) {
+		if (lists.getRole(ch.getAltSpec()) == 3 && lists.getRole(ch.getSpec()) != lists.getRole(ch.getAltSpec())) {
 			adpss += 1;
-		} else if (lists.getRole(ch.getAltSpec()) == 2) {
+		}
+		if (lists.getRole(ch.getAltSpec()) == 2 && lists.getRole(ch.getSpec()) != lists.getRole(ch.getAltSpec())) {
 			aheals += 1;
-		} else if (lists.getRole(ch.getAltSpec()) == 1) {
+		}
+		if (lists.getRole(ch.getAltSpec()) == 1 && lists.getRole(ch.getSpec()) != lists.getRole(ch.getAltSpec())) {
 			atanks += 1;
 		}
 	}
