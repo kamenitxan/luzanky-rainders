@@ -30,7 +30,6 @@ public class Generator {
 	private int atanks = 0;
 	private int aheals = 0;
 	private int adpss = 0;
-	private int total = 0;
 
 	private int timeOuts = 0;
 
@@ -168,16 +167,17 @@ public class Generator {
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.min.js\"></script>");
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.widgets.js\"></script>");
 			html.style().raw(".table-striped>tbody>tr:nth-child(odd) {background-color: rgb(28, 28, 28) !important;}" +
-							 ".table {width: auto;}").end();
+							 ".table {width: auto;} .role {display: none;}").end();
 		html.body().style("color: white; background-color: black;");
 			html.h1().text("Seznam raiderů Lužánek").end();
 			html.raw("<table id=\"myTable\" class=\"table table-striped table-condensed tablesorter\" data-sortlist=\"[[4,1]]\"><thead><tr>" +
 					"<th>Jméno</th>" +
 					"<th>Povolání</th>" +
-					"<th data-placeholder=\"nefunguje\">Spec</th>" +
-					"<th data-placeholder=\"nefunguje\">Off-Spec</th>" +
+					"<th data-placeholder=\"treba heal\">Spec</th>" +
+					"<th>Off-Spec</th>" +
 					"<th data-value=\">615\">iLVL</th>" +
-					"<th>Rank</th></tr></thead><tbody>");
+					"<th>Rank</th></tr>" +
+					"<th>Audit</th></thead><tbody>");
 
 			characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> html.raw(createRow(ch)));
 //			for (Character ch : characters) {
@@ -190,7 +190,7 @@ public class Generator {
 			html.p().text("Tanků: " + tanks + " (" + (tanks + atanks) + ")").br()
 					.text("Healů: " + heals + " (" + (heals + aheals) + ")").br()
 					.text("DPS: "   + dpss + " (" +  (dpss  + adpss)  + ")").br()
-					.text("Celkem: " + total);
+					.text("Celkem: " + characters.size());
 
 			html.p().text(getTime()).end();
 		html.p().text("Timeouts: " + timeOuts).end();
@@ -216,10 +216,11 @@ public class Generator {
 				+ ch.getName()
 				+ "</td><td>"
 				+ lists.getPClass(ch.getPlayerClass()) + "</td><td>"
-				+ "<img src=\"img/" + lists.getRole(ch.getSpec()) + ".png\"> "
+				+ "<img src=\"img/" + lists.getRole(ch.getSpec()) + ".png\">" + "<span class=\"role\">" + lists.getRoleType(ch.getSpec()) + lists.getRoleType(ch.getAltSpec()) + "</span> "
 				+ ch.getSpec() + "</td><td>"
-				+ "<img src=\"img/" + lists.getRole(ch.getAltSpec()) + ".png\"> "
-				+ ch.getAltSpec() + "</td><td>" + ch.getIlvl() + "</td><td>" + lists.getRank(ch.getRank()) + "</td>") ;
+				+ "<img src=\"img/" + lists.getRole(ch.getAltSpec()) + ".png\">" + "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span>"
+				+ ch.getAltSpec() + "</td><td>" + ch.getIlvl() + "</td><td>" + lists.getRank(ch.getRank()) + "</td>")
+				+ "!";
 	}
 
 	private String getTime(){
@@ -232,7 +233,6 @@ public class Generator {
 	}
 
 	private void countRole(Character ch) {
-		total++;
 		if (lists.getRole(ch.getSpec()) == 3) {
 			dpss += 1;
 		} else if (lists.getRole(ch.getSpec()) == 2) {

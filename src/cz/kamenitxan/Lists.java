@@ -107,4 +107,12 @@ public class Lists {
 		return 3;
 	}
 
+	public String getRoleType(String spec) {
+		int role = getRole(spec);
+		if (role == 1) return "tank";
+		if (role == 2) return "heal";
+		if (role == 3) return "dps";
+		return "";
+	}
+
 }
