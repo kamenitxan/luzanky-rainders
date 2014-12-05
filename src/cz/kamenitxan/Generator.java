@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("HardcodedFileSeparator")
 public class Generator {
 	private ArrayList<Character> characters;
 	private final Lists lists = Lists.getInstance();
@@ -142,11 +143,53 @@ public class Generator {
 		character.setSecondaryProf(secondary_prof.getString("name"));
 		character.setSecondaryProfLvl(secondary_prof.getInt("rank"));
 
+		processAudit(items, character);
 		//System.out.println(jsonObject.toString());
 
 		if (character.getTitle() == null) {
 			character.setTitle("");
 		}
+	}
+
+	private void processAudit(JsonObject items, Character ch) {
+		JsonObject neck = items.getJsonObject("neck").getJsonObject("tooltipParams");
+		JsonObject back = items.getJsonObject("back").getJsonObject("tooltipParams");
+		JsonObject weapon = items.getJsonObject("mainHand");
+		JsonObject ring1 = items.getJsonObject("finger1").getJsonObject("tooltipParams");
+		JsonObject ring2 = items.getJsonObject("finger2").getJsonObject("tooltipParams");
+
+		if (neck.getInt("enchant", 0) == 0) {ch.setNeckEnch(false);}
+		if (back.getInt("enchant", 0) == 0) {ch.setBackEnch(false);}
+		if (ring1.getInt("enchant", 0) == 0) {ch.setRing1Ench(false);}
+		if (ring2.getInt("enchant", 0) == 0) {ch.setRing2Ench(false);}
+		if (weapon.getInt("itemLevel") >= 640) {
+			if (weapon.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setWeaponEnch(false);}
+		}
+	}
+
+	private String getAudit(Character ch) {
+		String result = "";
+		int count = 0;
+		if (!ch.isBackEnch()) {
+			result += "Back enchant, ";
+			count++;
+		}
+		if (!ch.isNeckEnch()) {
+			result += "Neck enchant, ";
+			count++;
+		}
+		if (!ch.isWeaponEnch()) {
+			result += "Weapon enchant, ";
+			count++;
+		}
+		if (!ch.isRing1Ench() || !ch.isRing2Ench()) {
+			result += "Ring enchant, ";
+			count++;
+		}
+		if (!result.equals("")) {
+			return "<img src=\"img/error.png\" title=\"Chybí: " + result + "\"> " + count;
+		}
+		return result;
 	}
 
 
@@ -170,14 +213,15 @@ public class Generator {
 							 ".table {width: auto;} .role {display: none;}").end();
 		html.body().style("color: white; background-color: black;");
 			html.h1().text("Seznam raiderů Lužánek").end();
+			html.p().a().href("img/changelog.html").text("Changelog - seznam změn").endAll();
 			html.raw("<table id=\"myTable\" class=\"table table-striped table-condensed tablesorter\" data-sortlist=\"[[4,1]]\"><thead><tr>" +
 					"<th>Jméno</th>" +
 					"<th>Povolání</th>" +
 					"<th data-placeholder=\"treba heal\">Spec</th>" +
 					"<th>Off-Spec</th>" +
 					"<th data-value=\">615\">iLVL</th>" +
-					"<th>Rank</th></tr>" +
-					"<th>Audit</th></thead><tbody>");
+					"<th>Rank</th>" +
+					"<th>Audit</th></tr></thead><tbody>");
 
 			characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> html.raw(createRow(ch)));
 //			for (Character ch : characters) {
@@ -220,7 +264,7 @@ public class Generator {
 				+ ch.getSpec() + "</td><td>"
 				+ "<img src=\"img/" + lists.getRole(ch.getAltSpec()) + ".png\">" + "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span>"
 				+ ch.getAltSpec() + "</td><td>" + ch.getIlvl() + "</td><td>" + lists.getRank(ch.getRank()) + "</td>")
-				+ "!";
+				+ "<td>" + getAudit(ch) + "</td>";
 	}
 
 	private String getTime(){

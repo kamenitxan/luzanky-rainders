@@ -19,6 +19,11 @@ public class Character implements Comparable{
 	private int race = 0;
 	private int gender = 0;
 	private int achievementPoints = 0;
+	private boolean weaponEnch = true;
+	private boolean neckEnch = true;
+	private boolean backEnch = true;
+	private boolean ring1Ench = true;
+	private boolean ring2Ench = true;
 
 	public Character(String realm, String name, int rank) {
 		this.realm = realm;
@@ -164,6 +169,46 @@ public class Character implements Comparable{
 
 	public void setSecondaryProfLvl(int secondaryProfLvl) {
 		this.secondaryProfLvl = secondaryProfLvl;
+	}
+
+	public boolean isWeaponEnch() {
+		return weaponEnch;
+	}
+
+	public void setWeaponEnch(boolean weaponEnch) {
+		this.weaponEnch = weaponEnch;
+	}
+
+	public boolean isNeckEnch() {
+		return neckEnch;
+	}
+
+	public void setNeckEnch(boolean neckEnch) {
+		this.neckEnch = neckEnch;
+	}
+
+	public boolean isBackEnch() {
+		return backEnch;
+	}
+
+	public void setBackEnch(boolean backEnch) {
+		this.backEnch = backEnch;
+	}
+
+	public boolean isRing1Ench() {
+		return ring1Ench;
+	}
+
+	public void setRing1Ench(boolean ring1Ench) {
+		this.ring1Ench = ring1Ench;
+	}
+
+	public boolean isRing2Ench() {
+		return ring2Ench;
+	}
+
+	public void setRing2Ench(boolean ring2Ench) {
+		this.ring2Ench = ring2Ench;
 	}
 
 

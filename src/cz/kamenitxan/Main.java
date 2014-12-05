@@ -2,9 +2,7 @@ package cz.kamenitxan;
 
 import javax.json.*;
 import javax.json.stream.JsonParsingException;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -52,7 +50,14 @@ public class Main {
             jsonObject = jsonReader.readObject();
         } catch (JsonParsingException ex) {
             ex.getMessage();
-            System.out.println(is.toString());
+            BufferedReader in = new BufferedReader(new InputStreamReader(is));
+            String inputLine;
+            try {
+                while ((inputLine = in.readLine()) != null)
+					System.out.println(inputLine);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         JsonArray members = jsonObject.getJsonArray("members");
