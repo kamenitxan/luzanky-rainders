@@ -38,11 +38,28 @@ public class Generator {
 		this.characters = characters;
 	}
 
-	public void getData() {
+	public String getData() {
 		ExecutorService executor = Executors.newFixedThreadPool(16);
+//
+//		for (Character character : characters) {
+//			executor.submit(() -> queryAPI(character));
+//		}
+//		executor.shutdown();
+//
+//		try {
+//			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
 
-		for (Character character : characters) {
-			executor.submit(() -> queryAPI(character));
+
+		ArrayList<Character> chars = (ArrayList<Character>) characters.clone();
+		for (final Character ch : chars) {
+			executor.execute(new Runnable() {
+				public void run() {
+					queryAPI(ch);
+				}
+			});
 		}
 		executor.shutdown();
 
@@ -51,10 +68,8 @@ public class Generator {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		/*ArrayList<Character> chars = (ArrayList<Character>) characters.clone();
-		chars.forEach(this::queryAPI);*/
 
-		generateHTML();
+		return generateHTML();
 
 	}
 
@@ -193,8 +208,11 @@ public class Generator {
 	}
 
 
-	private void generateHTML() {
-		characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> countRole(ch));
+	private String generateHTML() {
+		//characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> countRole(ch));
+		for (Character ch : characters) {
+			countRole(ch);
+		}
 
 		StringWriter sw = new StringWriter();
 		Html html = new Html(sw);
@@ -210,7 +228,7 @@ public class Generator {
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.min.js\"></script>");
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.widgets.js\"></script>");
 			html.style().raw(".table-striped>tbody>tr:nth-child(odd) {background-color: rgb(28, 28, 28) !important;}" +
-							 ".table {width: auto;} .role {display: none;}").end();
+							 ".table {width: auto;} .role {display: none;} td a {color: inherit}").end();
 		html.body().style("color: white; background-color: black;");
 			html.h1().text("Seznam raiderů Lužánek").end();
 			html.p().a().href("img/changelog.html").text("Changelog - seznam změn").endAll();
@@ -223,12 +241,12 @@ public class Generator {
 					"<th>Rank</th>" +
 					"<th>Audit</th></tr></thead><tbody>");
 
-			characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> html.raw(createRow(ch)));
-//			for (Character ch : characters) {
-//				if (ch.getIlvl() > ILVL) {
-//					html.raw(createRow(ch));
-//				}
-//			}
+//			characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> html.raw(createRow(ch)));
+			for (Character ch : characters) {
+				if (ch.getIlvl() > ILVL) {
+					html.raw(createRow(ch));
+				}
+			}
 
 			html.raw("</tbody></table>");
 			html.p().text("Tanků: " + tanks + " (" + (tanks + atanks) + ")").br()
@@ -245,26 +263,29 @@ public class Generator {
 					 		  "});").end();
 			html.endAll();
 
+		characters.clear();
 		String result = sw.getBuffer().toString();
-		try {
-			Files.write(Paths.get("raiders.html"), result.getBytes());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		return result;
+//		try {
+//			Files.write(Paths.get("raiders.html"), result.getBytes());
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 
-		System.out.println("HTML vygenerováno");
+		//System.out.println("HTML vygenerováno");
 	}
 
 	private String createRow(Character ch){
 		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\" ><td>"
-				+ ch.getName()
+				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName() +"/advanced\">" + ch.getName() + "</a>"
 				+ "</td><td>"
 				+ lists.getPClass(ch.getPlayerClass()) + "</td><td>"
 				+ "<img src=\"img/" + lists.getRole(ch.getSpec()) + ".png\">" + "<span class=\"role\">" + lists.getRoleType(ch.getSpec()) + lists.getRoleType(ch.getAltSpec()) + "</span> "
 				+ ch.getSpec() + "</td><td>"
 				+ "<img src=\"img/" + lists.getRole(ch.getAltSpec()) + ".png\">" + "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span>"
 				+ ch.getAltSpec() + "</td><td>" + ch.getIlvl() + "</td><td>" + lists.getRank(ch.getRank()) + "</td>")
-				+ "<td>" + getAudit(ch) + "</td>";
+				+ "<td>" + getAudit(ch) + "</td>"
+				+ "</tr>\n";
 	}
 
 	private String getTime(){
