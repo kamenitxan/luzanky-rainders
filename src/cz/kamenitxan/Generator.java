@@ -210,7 +210,7 @@ public class Generator {
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.min.js\"></script>");
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.widgets.js\"></script>");
 			html.style().raw(".table-striped>tbody>tr:nth-child(odd) {background-color: rgb(28, 28, 28) !important;}" +
-							 ".table {width: auto;} .role {display: none;}").end();
+							 ".table {width: auto;} .role {display: none;} td a {color: inherit}").end();
 		html.body().style("color: white; background-color: black;");
 			html.h1().text("Seznam raiderů Lužánek").end();
 			html.p().a().href("img/changelog.html").text("Changelog - seznam změn").endAll();
@@ -257,14 +257,15 @@ public class Generator {
 
 	private String createRow(Character ch){
 		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\" ><td>"
-				+ ch.getName()
+				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName() +"/advanced\">" + ch.getName() + "</a>"
 				+ "</td><td>"
 				+ lists.getPClass(ch.getPlayerClass()) + "</td><td>"
 				+ "<img src=\"img/" + lists.getRole(ch.getSpec()) + ".png\">" + "<span class=\"role\">" + lists.getRoleType(ch.getSpec()) + lists.getRoleType(ch.getAltSpec()) + "</span> "
 				+ ch.getSpec() + "</td><td>"
 				+ "<img src=\"img/" + lists.getRole(ch.getAltSpec()) + ".png\">" + "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span>"
 				+ ch.getAltSpec() + "</td><td>" + ch.getIlvl() + "</td><td>" + lists.getRank(ch.getRank()) + "</td>")
-				+ "<td>" + getAudit(ch) + "</td>";
+				+ "<td>" + getAudit(ch) + "</td>"
+				+ "</tr>\n";
 	}
 
 	private String getTime(){
