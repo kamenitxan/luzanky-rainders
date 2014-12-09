@@ -1,11 +1,12 @@
 package cz.kamenitxan;
 
 import com.googlecode.jatl.Html;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.sftp.SFTPClient;
+import net.schmizz.sshj.xfer.FileSystemFile;
+
 import javax.json.*;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
@@ -152,17 +153,28 @@ public class Generator {
 	}
 
 	private void processAudit(JsonObject items, Character ch) {
-		JsonObject neck = items.getJsonObject("neck").getJsonObject("tooltipParams");
-		JsonObject back = items.getJsonObject("back").getJsonObject("tooltipParams");
-		JsonObject weapon = items.getJsonObject("mainHand");
-		JsonObject ring1 = items.getJsonObject("finger1").getJsonObject("tooltipParams");
-		JsonObject ring2 = items.getJsonObject("finger2").getJsonObject("tooltipParams");
+		int lowerILV = 630;
+		int higherIVL = 650;
 
-		if (neck.getInt("enchant", 0) == 0) {ch.setNeckEnch(false);}
-		if (back.getInt("enchant", 0) == 0) {ch.setBackEnch(false);}
-		if (ring1.getInt("enchant", 0) == 0) {ch.setRing1Ench(false);}
-		if (ring2.getInt("enchant", 0) == 0) {ch.setRing2Ench(false);}
-		if (weapon.getInt("itemLevel") >= 640) {
+		JsonObject neck = items.getJsonObject("neck");
+		JsonObject back = items.getJsonObject("back");
+		JsonObject weapon = items.getJsonObject("mainHand");
+		JsonObject ring1 = items.getJsonObject("finger1");
+		JsonObject ring2 = items.getJsonObject("finger2");
+
+		if (neck.getInt("itemLevel") >= lowerILV) {
+			if (neck.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setNeckEnch(false);}
+		}
+		if (back.getInt("itemLevel") >= lowerILV) {
+			if (back.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setBackEnch(false);}
+		}
+		if (ring1.getInt("itemLevel") >= lowerILV) {
+			if (ring1.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setRing1Ench(false);}
+		}
+		if (ring2.getInt("itemLevel") >= lowerILV) {
+			if (ring2.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setRing2Ench(false);}
+		}
+		if (weapon.getInt("itemLevel") >= higherIVL) {
 			if (weapon.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setWeaponEnch(false);}
 		}
 	}
@@ -182,8 +194,12 @@ public class Generator {
 			result += "Weapon enchant, ";
 			count++;
 		}
-		if (!ch.isRing1Ench() || !ch.isRing2Ench()) {
-			result += "Ring enchant, ";
+		if (!ch.isRing1Ench()) {
+			result += "Ring1 enchant, ";
+			count++;
+		}
+		if (!ch.isRing2Ench()) {
+			result += "Ring2 enchant, ";
 			count++;
 		}
 		if (!result.equals("")) {
@@ -253,6 +269,12 @@ public class Generator {
 		}
 
 		System.out.println("HTML vygenerováno");
+
+		try {
+			sshUpload("raiders.html");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private String createRow(Character ch){
@@ -293,6 +315,34 @@ public class Generator {
 		}
 		if (lists.getRole(ch.getAltSpec()) == 1 && lists.getRole(ch.getSpec()) != lists.getRole(ch.getAltSpec())) {
 			atanks += 1;
+		}
+	}
+
+	private void sshUpload(String fileName) throws IOException{
+		final SSHClient ssh = new SSHClient();
+		ssh.loadKnownHosts();
+		ssh.addHostKeyVerifier("85:c8:d7:b4:33:1b:28:33:90:78:47:65:96:0b:85:9d");
+		ssh.connect("192.168.1.1");
+		String pass = "";
+		try (BufferedReader br = new BufferedReader(new FileReader("ssh_heslo")))
+		{
+			String sCurrentLine = br.readLine();
+				pass = sCurrentLine;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+
+			ssh.authPassword("root", pass);
+			final String src = fileName;
+			final SFTPClient sftp = ssh.newSFTPClient();
+			try {
+				sftp.put(new FileSystemFile(src), "/tmp/blog/share/");
+			} finally {
+				sftp.close();
+			}
+		} finally {
+			ssh.disconnect();
 		}
 	}
 }
