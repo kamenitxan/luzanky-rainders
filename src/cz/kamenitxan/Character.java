@@ -1,7 +1,10 @@
 package cz.kamenitxan;
 
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+
+import java.io.Serializable;
 
 @DatabaseTable
 public class Character implements Comparable{
@@ -15,10 +18,10 @@ public class Character implements Comparable{
 	private String guild = "";
 	@DatabaseField
 	private String title = null;
-	@DatabaseField
-	private String spec = null;
-	@DatabaseField
-	private String altSpec = null;
+	@DatabaseField(dataType = DataType.SERIALIZABLE)
+	private Spec spec = null;
+	@DatabaseField(dataType = DataType.SERIALIZABLE)
+	private Spec altSpec = null;
 	@DatabaseField
 	private String primaryProf = null;
 	@DatabaseField
@@ -29,8 +32,6 @@ public class Character implements Comparable{
 	private int secondaryProfLvl = 0;
 	@DatabaseField
 	private int lvl = 0;
-	@DatabaseField
-	private int ilvl = 0;
 	@DatabaseField
 	private int rank = 0;
 	@DatabaseField
@@ -58,6 +59,8 @@ public class Character implements Comparable{
 		this.realm = realm;
 		this.name = name;
 		this.rank = rank;
+		this.spec = new Spec();
+		this.altSpec = new Spec();
 	}
 
 	public int getRace() {
@@ -137,11 +140,18 @@ public class Character implements Comparable{
 	}
 
 	public int getIlvl() {
-		return ilvl;
+		return spec.getIlvl();
 	}
 
 	public void setIlvl(int ilvl) {
-		this.ilvl = ilvl;
+		this.spec.setIlvl(ilvl);
+	}
+	public int getAltIlvl() {
+		return altSpec.getIlvl();
+	}
+
+	public void setAltIlvl(int ilvl) {
+		this.altSpec.setIlvl(ilvl);
 	}
 
 	public String getTitle() {
@@ -153,19 +163,19 @@ public class Character implements Comparable{
 	}
 
 	public String getSpec() {
-		return spec;
+		return spec.getSpec();
 	}
 
 	public void setSpec(String spec) {
-		this.spec = spec;
+		this.spec.setSpec(spec);
 	}
 
 	public String getAltSpec() {
-		return altSpec;
+		return altSpec.getSpec();
 	}
 
 	public void setAltSpec(String altSpec) {
-		this.altSpec = altSpec;
+		this.altSpec.setSpec(altSpec);
 	}
 
 	public String getPrimaryProf() {
@@ -243,14 +253,16 @@ public class Character implements Comparable{
 
 	@Override
 	public int compareTo(Object o) {
-		if (ilvl < ((Character) o).getIlvl() ){
+		if (spec.getIlvl() < ((Character) o).getIlvl() ){
 			return -1;
 		}
-		if (ilvl == ((Character) o).getIlvl()) {
+		if (spec.getIlvl() == ((Character) o).getIlvl()) {
 			return 0;
 		}else {
 			return 1;
 		}
 
 	}
+
+
 }
