@@ -1,29 +1,58 @@
 package cz.kamenitxan;
 
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
+@DatabaseTable
 public class Character implements Comparable{
+	@DatabaseField(id = true)
 	private String name;
+	@DatabaseField
 	private String realm;
+	@DatabaseField
 	private String avatar = null;
+	@DatabaseField
 	private String guild = "";
+	@DatabaseField
 	private String title = null;
+	@DatabaseField
 	private String spec = null;
+	@DatabaseField
 	private String altSpec = null;
+	@DatabaseField
 	private String primaryProf = null;
+	@DatabaseField
 	private int primaryProfLvl = 0;
+	@DatabaseField
 	private String secondaryProf = null;
+	@DatabaseField
 	private int secondaryProfLvl = 0;
+	@DatabaseField
 	private int lvl = 0;
+	@DatabaseField
 	private int ilvl = 0;
+	@DatabaseField
 	private int rank = 0;
+	@DatabaseField
 	private int playerClass = 0;
+	@DatabaseField
 	private int race = 0;
+	@DatabaseField
 	private int gender = 0;
+	@DatabaseField
 	private int achievementPoints = 0;
+	@DatabaseField
 	private boolean weaponEnch = true;
+	@DatabaseField
 	private boolean neckEnch = true;
+	@DatabaseField
 	private boolean backEnch = true;
+	@DatabaseField
 	private boolean ring1Ench = true;
+	@DatabaseField
 	private boolean ring2Ench = true;
+
+	public Character() {}
 
 	public Character(String realm, String name, int rank) {
 		this.realm = realm;

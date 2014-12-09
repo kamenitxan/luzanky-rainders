@@ -1,16 +1,23 @@
 package cz.kamenitxan;
 
 import com.googlecode.jatl.Html;
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.xfer.FileSystemFile;
 
 import javax.json.*;
+import javax.json.stream.JsonParsingException;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,9 +29,14 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("HardcodedFileSeparator")
 public class Generator {
-	private ArrayList<Character> characters;
 	private final Lists lists = Lists.getInstance();
+	private String guildName = "Luzanky";
+	private String realm = "Thunderhorn";
 	private final int ILVL = 500;
+
+	private final String databaseUrl = "jdbc:sqlite:raiders.db";
+	private ConnectionSource connectionSource;
+	private Dao<Character, ?> dao;
 
 	private int tanks = 0;
 	private int heals = 0;
@@ -35,14 +47,97 @@ public class Generator {
 
 	private int timeOuts = 0;
 
-	public Generator(ArrayList<Character> characters) {
-		this.characters = characters;
+	public Generator() {
+		try {
+			Class.forName("org.sqlite.JDBC");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		try {
+			connectionSource = new JdbcConnectionSource(databaseUrl);
+			dao = DaoManager.createDao(connectionSource, Character.class);
+			if (!dao.isTableExists()) {
+				TableUtils.createTable(connectionSource, Character.class);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
 	}
 
-	public void getData() {
+	public void start(String[] args) {
+		if (args.length != 0) {
+			guildName = args[0];
+			realm = args[1];
+		}
+		queryGuild();
+		getData();
+		generateHTML();
+	}
+
+	private void queryGuild() {
+		System.out.println("Běh zahájen");
+		InputStream is = null;
+		while (is == null) {
+			try {
+				String host = "http://eu.battle.net/api/";
+				URL url = new URL(host + "wow/guild/" + realm + "/" + guildName +
+						"?fields=members");
+				is = url.openStream();
+			} catch (FileNotFoundException ex) {
+				System.out.println(ex.getLocalizedMessage());
+				System.out.println(ex.getMessage());
+				String error = "Postava  na serveru nenalezena";
+				System.out.println(error);
+			} catch (IOException ex) {
+				String error = ex.getLocalizedMessage();
+				System.out.println(error);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+		JsonReader jsonReader;
+		JsonObject jsonObject = null;
+		JsonArray members = null;
+		try{
+			jsonReader = Json.createReader(is);
+			jsonObject = jsonReader.readObject();
+			members = jsonObject.getJsonArray("members");
+		} catch (JsonParsingException ex) {
+			ex.getMessage();
+			BufferedReader in = new BufferedReader(new InputStreamReader(is));
+			String inputLine;
+			try {
+				while ((inputLine = in.readLine()) != null)
+					System.out.println(inputLine);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		members.forEach(m -> addChar(m));
+	}
+
+	private void addChar(JsonValue ch) {
+		JsonObject JsonCharacter = (JsonObject) ch;
+		int rank = JsonCharacter.getInt("rank");
+		JsonCharacter = JsonCharacter.getJsonObject("character");
+		if (JsonCharacter.getInt("level") == 100) {
+			Character character = new Character(realm, JsonCharacter.getString("name"), rank);
+			try {
+				dao.createOrUpdate(character);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			//characters.add(new Character(realm, JsonCharacter.getString("name"), rank));
+		}
+	}
+
+	private void getData() {
 		ExecutorService executor = Executors.newFixedThreadPool(16);
 
-		for (Character character : characters) {
+		for (Character character : dao) {
 			executor.submit(() -> queryAPI(character));
 		}
 		executor.shutdown();
@@ -55,11 +150,10 @@ public class Generator {
 		/*ArrayList<Character> chars = (ArrayList<Character>) characters.clone();
 		chars.forEach(this::queryAPI);*/
 
-		generateHTML();
-
 	}
 
 	private void queryAPI(Character character) {
+
 		InputStream is = null;
 		while (is == null) {
 			try{
@@ -75,7 +169,11 @@ public class Generator {
 				//System.out.println(ex.getMessage());
 				String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
 				System.out.println(error);
-				characters.remove(character);
+				try {
+					dao.delete(character);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 				return;
 			} catch (IOException ex) {
 				String error = ex.getLocalizedMessage();
@@ -93,7 +191,7 @@ public class Generator {
 		JsonReader jsonReader = Json.createReader(is);
 		JsonObject jsonObject = jsonReader.readObject();
 
-		System.out.println(jsonObject.toString());
+		// System.out.println(jsonObject.toString());
 
 		JsonObject guild = jsonObject.getJsonObject("guild");
 		JsonObject items = jsonObject.getJsonObject("items");
@@ -150,6 +248,12 @@ public class Generator {
 		if (character.getTitle() == null) {
 			character.setTitle("");
 		}
+
+		try {
+			dao.createOrUpdate(character);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void processAudit(JsonObject items, Character ch) {
@@ -176,6 +280,11 @@ public class Generator {
 		}
 		if (weapon.getInt("itemLevel") >= higherIVL) {
 			if (weapon.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setWeaponEnch(false);}
+		}
+		try {
+			dao.createOrUpdate(ch);
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -210,7 +319,13 @@ public class Generator {
 
 
 	private void generateHTML() {
-		characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> countRole(ch));
+		//characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> countRole(ch));
+		for (Character ch : dao) {
+			if (ch.getIlvl() > ILVL) {
+				countRole(ch);
+			}
+		}
+
 
 		StringWriter sw = new StringWriter();
 		Html html = new Html(sw);
@@ -239,20 +354,24 @@ public class Generator {
 					"<th>Rank</th>" +
 					"<th>Audit</th></tr></thead><tbody>");
 
-			characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> html.raw(createRow(ch)));
-//			for (Character ch : characters) {
-//				if (ch.getIlvl() > ILVL) {
-//					html.raw(createRow(ch));
-//				}
-//			}
+			//characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> html.raw(createRow(ch)));
+			for (Character ch : dao) {
+				if (ch.getIlvl() > ILVL) {
+					html.raw(createRow(ch));
+				}
+			}
 
 			html.raw("</tbody></table>");
+		try {
 			html.p().text("Tanků: " + tanks + " (" + (tanks + atanks) + ")").br()
 					.text("Healů: " + heals + " (" + (heals + aheals) + ")").br()
 					.text("DPS: "   + dpss + " (" +  (dpss  + adpss)  + ")").br()
-					.text("Celkem: " + characters.size());
+					.text("Celkem: " + dao.countOf());
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
-			html.p().text(getTime()).end();
+		html.p().text(getTime()).end();
 		html.p().text("Timeouts: " + timeOuts).end();
 		html.script().raw("$(function(){\n" +
 				"		$(\"#myTable\").tablesorter(" +
