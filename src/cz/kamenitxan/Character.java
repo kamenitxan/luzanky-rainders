@@ -51,6 +51,8 @@ public class Character implements Comparable{
 	@DatabaseField
 	private boolean ring2Ench = true;
 	@DatabaseField
+	private int missingGems = 0;
+	@DatabaseField
 	private int dpsChallenge = 0;
 	@DatabaseField
 	private int tankChallenge = 0;
@@ -252,6 +254,18 @@ public class Character implements Comparable{
 
 	public void setRing2Ench(boolean ring2Ench) {
 		this.ring2Ench = ring2Ench;
+	}
+
+	public int getMissingGems() {
+		return missingGems;
+	}
+
+	public void setMissingGems(boolean missingGem) {
+		if (missingGem) {
+			this.missingGems += 1;
+		}else {
+			this.missingGems = 0;
+		}
 	}
 
 	public int getDpsChallenge() {

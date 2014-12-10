@@ -101,6 +101,7 @@ public class Generator {
 			jsonReader = Json.createReader(is);
 			jsonObject = jsonReader.readObject();
 			members = jsonObject.getJsonArray("members");
+			members.forEach(m -> addChar(m));
 		} catch (JsonParsingException ex) {
 			ex.getMessage();
 			BufferedReader in = new BufferedReader(new InputStreamReader(is));
@@ -112,8 +113,6 @@ public class Generator {
 				e.printStackTrace();
 			}
 		}
-
-		members.forEach(m -> addChar(m));
 	}
 
 	private void addChar(JsonValue ch) {
@@ -273,37 +272,92 @@ public class Generator {
 	private void processAudit(JsonObject items, Character ch) {
 		int lowerILV = 630;
 		int higherIVL = 650;
+		ch.setMissingGems(false);
 
+		JsonObject head = items.getJsonObject("head");
+		if (head.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, head);
+		}
 		JsonObject neck = items.getJsonObject("neck");
-		JsonObject back = items.getJsonObject("back");
-		JsonObject weapon = items.getJsonObject("mainHand");
-		JsonObject ring1 = items.getJsonObject("finger1");
-		JsonObject ring2 = items.getJsonObject("finger2");
-
 		if (neck.getInt("itemLevel") >= lowerILV) {
 			if (neck.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setNeckEnch(false);}
 			else {ch.setNeckEnch(true);}
+			checkGem(ch, neck);
 		}
+		JsonObject shoulder = items.getJsonObject("shoulder");
+		if (shoulder.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, shoulder);
+		}
+		JsonObject back = items.getJsonObject("back");
 		if (back.getInt("itemLevel") >= lowerILV) {
 			if (back.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setBackEnch(false);}
 			else {ch.setBackEnch(true);}
+			checkGem(ch, back);
 		}
+		JsonObject chest = items.getJsonObject("chest");
+		if (chest.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, chest);
+		}
+		JsonObject wrist = items.getJsonObject("wrist");
+		if (wrist.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, wrist);
+		}
+		JsonObject hands = items.getJsonObject("hands");
+		if (hands.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, hands);
+		}
+		JsonObject waist = items.getJsonObject("waist");
+		if (waist.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, waist);
+		}
+		JsonObject legs = items.getJsonObject("legs");
+		if (legs.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, legs);
+		}
+		JsonObject feet = items.getJsonObject("feet");
+		if (feet.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, feet);
+		}
+		JsonObject ring1 = items.getJsonObject("finger1");
 		if (ring1.getInt("itemLevel") >= lowerILV) {
 			if (ring1.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setRing1Ench(false);}
 			else {ch.setRing1Ench(true);}
+			checkGem(ch, ring1);
 		}
+		JsonObject ring2 = items.getJsonObject("finger2");
 		if (ring2.getInt("itemLevel") >= lowerILV) {
 			if (ring2.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setRing2Ench(false);}
 			else {ch.setRing2Ench(true);}
+			checkGem(ch, ring2);
 		}
+		JsonObject trinket1 = items.getJsonObject("trinket1");
+		if (trinket1.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, trinket1);
+		}
+		JsonObject trinket2 = items.getJsonObject("trinket2");
+		if (trinket2.getInt("itemLevel") >= lowerILV) {
+			checkGem(ch, trinket2);
+		}
+		JsonObject weapon = items.getJsonObject("mainHand");
 		if (weapon.getInt("itemLevel") >= higherIVL) {
 			if (weapon.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setWeaponEnch(false);}
 			else {ch.setWeaponEnch(true);}
+			checkGem(ch, weapon);
 		}
 		try {
 			dao.createOrUpdate(ch);
 		} catch (SQLException e) {
 			e.printStackTrace();
+		}
+	}
+	private void checkGem(Character ch, JsonObject item) {
+		if (item.getJsonArray("bonusLists").size() > 1) {
+			String bL = item.getJsonArray("bonusLists").toString();
+			if (bL.contains(String.valueOf(523)) && bL.contains(String.valueOf(524))) {
+				if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
+					ch.setMissingGems(true);
+				}
+			}
 		}
 	}
 
@@ -329,6 +383,10 @@ public class Generator {
 		if (!ch.isRing2Ench()) {
 			result += "Ring2 enchant, ";
 			count++;
+		}
+		if (ch.getMissingGems() > 0) {
+			result += "Chybí " + ch.getMissingGems() + " gem(y), ";
+			count += ch.getMissingGems();
 		}
 		if (!result.equals("")) {
 			return "<img src=\"img/error.png\" title=\"Chybí: " + result + "\"> " + count;
@@ -500,11 +558,8 @@ public class Generator {
 		try {
 
 			ssh.authPassword("root", pass);
-			final SFTPClient sftp = ssh.newSFTPClient();
-			try {
+			try (SFTPClient sftp = ssh.newSFTPClient()) {
 				sftp.put(new FileSystemFile(fileName), "/tmp/blog/share/");
-			} finally {
-				sftp.close();
 			}
 		} finally {
 			ssh.disconnect();
