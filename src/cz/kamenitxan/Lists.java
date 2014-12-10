@@ -73,7 +73,7 @@ public class Lists {
 	 * @param spec
 	 * @return 1 tank, 2 heal 3 dmg
 	 */
-	public int getRole(String spec) {
+	public static int getRole(String spec) {
 		if (spec == null) {
 			return 0;
 		}

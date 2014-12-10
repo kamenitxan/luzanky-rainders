@@ -4,8 +4,6 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
-import java.io.Serializable;
-
 @DatabaseTable
 public class Character implements Comparable{
 	@DatabaseField(id = true)
@@ -52,6 +50,12 @@ public class Character implements Comparable{
 	private boolean ring1Ench = true;
 	@DatabaseField
 	private boolean ring2Ench = true;
+	@DatabaseField
+	private int dpsChallenge = 0;
+	@DatabaseField
+	private int tankChallenge = 0;
+	@DatabaseField
+	private int healChallenge = 0;
 
 	public Character() {}
 
@@ -250,6 +254,47 @@ public class Character implements Comparable{
 		this.ring2Ench = ring2Ench;
 	}
 
+	public int getDpsChallenge() {
+		return dpsChallenge;
+	}
+
+	public void setDpsChallenge(int dpsChallenge) {
+		this.dpsChallenge = dpsChallenge;
+	}
+
+	public int getTankChallenge() {
+		return tankChallenge;
+	}
+
+	public void setTankChallenge(int tankChallenge) {
+		this.tankChallenge = tankChallenge;
+	}
+
+	public int getHealChallenge() {
+		return healChallenge;
+	}
+
+	public void setHealChallenge(int healChallenge) {
+		this.healChallenge = healChallenge;
+	}
+
+	/**
+	 * @param s 1 is main spec, 2 is off spec
+	 * @return level of proving ground for spec
+	 */
+	public int getSpecChallenge(int s) {
+		if (s == 1) {
+			s = Lists.getRole(getSpec());
+		}else {
+			s = Lists.getRole(getAltSpec());
+		}
+		switch (s) {
+			case 3: {return dpsChallenge;}
+			case 1: {return tankChallenge;}
+			case 2: {return healChallenge;}
+		}
+		return 0;
+	}
 
 	@Override
 	public int compareTo(Object o) {

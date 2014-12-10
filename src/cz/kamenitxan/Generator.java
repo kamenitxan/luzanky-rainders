@@ -20,7 +20,6 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
@@ -35,7 +34,7 @@ public class Generator {
 	private final int ILVL = 500;
 
 	private final String databaseUrl = "jdbc:sqlite:raiders.db";
-	private Dao<Character, String> dao;
+	private Dao<Character, String> dao = null;
 
 	private int tanks = 0;
 	private int heals = 0;
@@ -96,7 +95,7 @@ public class Generator {
 			}
 		}
 		JsonReader jsonReader;
-		JsonObject jsonObject = null;
+		JsonObject jsonObject;
 		JsonArray members = null;
 		try{
 			jsonReader = Json.createReader(is);
@@ -159,7 +158,7 @@ public class Generator {
 			try{
 				String host = "http://eu.battle.net/api/";
 				URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName() +
-						"?fields=guild,items,titles,talents,professions");
+						"?fields=guild,items,titles,talents,professions,achievements");
 				// System.out.println(url.toString());
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setReadTimeout(1500); //1,5 vteřiny
@@ -198,6 +197,7 @@ public class Generator {
 		JsonObject items = jsonObject.getJsonObject("items");
 		JsonArray titles = jsonObject.getJsonArray("titles");
 		JsonArray talents = jsonObject.getJsonArray("talents");
+		JsonArray achievements = jsonObject.getJsonObject("achievements").getJsonArray("achievementsCompleted");
 
 		JsonObject spec = talents.getJsonObject(0);
 		String specs = spec.getJsonObject("spec").getString("name");
@@ -241,6 +241,20 @@ public class Generator {
 		character.setPrimaryProfLvl(primary_prof.getInt("rank"));
 		character.setSecondaryProf(secondary_prof.getString("name"));
 		character.setSecondaryProfLvl(secondary_prof.getInt("rank"));
+
+		achievements.parallelStream().filter(a -> Integer.parseInt(a.toString()) > 9570).forEach(a -> {
+			switch (Integer.parseInt(a.toString())) {
+				case 9578: {character.setTankChallenge(1); break;}
+				case 9579: {character.setTankChallenge(2); break;}
+				case 9580: {character.setTankChallenge(3); break;}
+				case 9584: {character.setHealChallenge(1); break;}
+				case 9585: {character.setHealChallenge(2); break;}
+				case 9586: {character.setHealChallenge(3); break;}
+				case 9572: {character.setDpsChallenge(1); break;}
+				case 9573: {character.setDpsChallenge(2); break;}
+				case 9574: {character.setDpsChallenge(3); break;}
+			}
+		});
 
 		processAudit(items, character);
 		//System.out.println(jsonObject.toString());
@@ -403,15 +417,41 @@ public class Generator {
 	}
 
 	private String createRow(Character ch){
+		String sChall = "<img src=\"img/ch";
+		String altChall = sChall;
+		int iLvl = ch.getIlvl();
+		int altiLvl = ch.getAltIlvl();
+		if (ch.getSpecChallenge(1) != 0) {
+			sChall += ch.getSpecChallenge(1) + ".png\">";
+		} else {sChall = "";}
+		if (ch.getSpecChallenge(2) != 0) {
+			altChall += ch.getSpecChallenge(2) + ".png\">";
+		} else {altChall = "";}
+		if (altiLvl > iLvl) {
+			String t = sChall;
+			sChall = altChall;
+			altChall = t;
+		}
+		if (altiLvl > iLvl) {
+			int t = iLvl;
+			iLvl = altiLvl;
+			altiLvl = t;
+		}
+		String spec = "<img src=\"img/" + Lists.getRole(ch.getSpec()) + ".png\">"
+				+ sChall
+				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span> "
+				+ ch.getSpec();
+		String altspec = "<img src=\"img/" + Lists.getRole(ch.getAltSpec()) + ".png\">"
+				+ altChall
+				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span> "
+				+ ch.getAltSpec();
 		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\" ><td>"
 				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName() +"/advanced\">" + ch.getName() + "</a></td>"
 				+ "<td>" + lists.getPClass(ch.getPlayerClass()) + "</td>"
-				+ "<td><img src=\"img/" + lists.getRole(ch.getSpec()) + ".png\">"   + "<span class=\"role\">"
-				+ lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span>" + ch.getSpec() + "</td>"
-				+ "<td>" + ch.getIlvl() + "</td>"
-				+ "<td><img src=\"img/" + lists.getRole(ch.getAltSpec()) + ".png\">"   + "<span class=\"role\">"
-				+ lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span>" + ch.getAltSpec() + "</td>"
-				+ "<td>" + ch.getAltIlvl() + "</td>"
+				+ "<td>" + spec + "</td>"
+				+ "<td>" + iLvl + "</td>"
+				+ "<td>" + altspec + "</td>"
+				+ "<td>" + altiLvl + "</td>"
 				+ "<td>" + lists.getRank(ch.getRank()) + "</td>")
 				+ "<td>" + getAudit(ch) + "</td>"
 				+ "</tr>\n";
@@ -427,20 +467,20 @@ public class Generator {
 	}
 
 	private void countRole(Character ch) {
-		if (lists.getRole(ch.getSpec()) == 3) {
+		if (Lists.getRole(ch.getSpec()) == 3) {
 			dpss += 1;
-		} else if (lists.getRole(ch.getSpec()) == 2) {
+		} else if (Lists.getRole(ch.getSpec()) == 2) {
 			heals += 1;
-		} else if (lists.getRole(ch.getSpec()) == 1) {
+		} else if (Lists.getRole(ch.getSpec()) == 1) {
 			tanks += 1;
 		}
-		if (lists.getRole(ch.getAltSpec()) == 3 && lists.getRole(ch.getSpec()) != lists.getRole(ch.getAltSpec())) {
+		if (Lists.getRole(ch.getAltSpec()) == 3 && Lists.getRole(ch.getSpec()) != Lists.getRole(ch.getAltSpec())) {
 			adpss += 1;
 		}
-		if (lists.getRole(ch.getAltSpec()) == 2 && lists.getRole(ch.getSpec()) != lists.getRole(ch.getAltSpec())) {
+		if (Lists.getRole(ch.getAltSpec()) == 2 && Lists.getRole(ch.getSpec()) != Lists.getRole(ch.getAltSpec())) {
 			aheals += 1;
 		}
-		if (lists.getRole(ch.getAltSpec()) == 1 && lists.getRole(ch.getSpec()) != lists.getRole(ch.getAltSpec())) {
+		if (Lists.getRole(ch.getAltSpec()) == 1 && Lists.getRole(ch.getSpec()) != Lists.getRole(ch.getAltSpec())) {
 			atanks += 1;
 		}
 	}
@@ -453,18 +493,16 @@ public class Generator {
 		String pass = "";
 		try (BufferedReader br = new BufferedReader(new FileReader("ssh_heslo")))
 		{
-			String sCurrentLine = br.readLine();
-				pass = sCurrentLine;
+			pass = br.readLine();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		try {
 
 			ssh.authPassword("root", pass);
-			final String src = fileName;
 			final SFTPClient sftp = ssh.newSFTPClient();
 			try {
-				sftp.put(new FileSystemFile(src), "/tmp/blog/share/");
+				sftp.put(new FileSystemFile(fileName), "/tmp/blog/share/");
 			} finally {
 				sftp.close();
 			}
