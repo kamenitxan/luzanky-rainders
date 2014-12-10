@@ -241,7 +241,10 @@ public class Generator {
 		character.setSecondaryProf(secondary_prof.getString("name"));
 		character.setSecondaryProfLvl(secondary_prof.getInt("rank"));
 
-		achievements.parallelStream().filter(a -> Integer.parseInt(a.toString()) > 9570).forEach(a -> {
+		character.setTankChallenge(0);
+		character.setHealChallenge(0);
+		character.setDpsChallenge(0);
+		achievements.stream().filter(a -> Integer.parseInt(a.toString()) > 9570 && Integer.parseInt(a.toString()) < 9590).forEach(a -> {
 			switch (Integer.parseInt(a.toString())) {
 				case 9578: {character.setTankChallenge(1); break;}
 				case 9579: {character.setTankChallenge(2); break;}
@@ -403,7 +406,6 @@ public class Generator {
 			}
 		}
 
-
 		StringWriter sw = new StringWriter();
 		Html html = new Html(sw);
 
@@ -475,40 +477,38 @@ public class Generator {
 	}
 
 	private String createRow(Character ch){
-		String sChall = "<img src=\"img/ch";
-		String altChall = sChall;
+		String spec = "<img src=\"img/ch";
+		String altSpec = spec;
 		int iLvl = ch.getIlvl();
 		int altiLvl = ch.getAltIlvl();
 		if (ch.getSpecChallenge(1) != 0) {
-			sChall += ch.getSpecChallenge(1) + ".png\">";
-		} else {sChall = "";}
+			spec += ch.getSpecChallenge(1) + ".png\">";
+		} else {spec = "";}
 		if (ch.getSpecChallenge(2) != 0) {
-			altChall += ch.getSpecChallenge(2) + ".png\">";
-		} else {altChall = "";}
+			altSpec += ch.getSpecChallenge(2) + ".png\">";
+		} else {altSpec = "";}
+		spec = "<img src=\"img/" + Lists.getRole(ch.getSpec()) + ".png\">" + spec
+				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span> "
+				+ ch.getSpec();
+		altSpec = "<img src=\"img/" + Lists.getRole(ch.getAltSpec()) + ".png\">" + altSpec
+				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span> "
+				+ ch.getAltSpec();
 		if (altiLvl > iLvl) {
-			String t = sChall;
-			sChall = altChall;
-			altChall = t;
+			String t = spec;
+			spec = altSpec;
+			altSpec = t;
 		}
 		if (altiLvl > iLvl) {
 			int t = iLvl;
 			iLvl = altiLvl;
 			altiLvl = t;
 		}
-		String spec = "<img src=\"img/" + Lists.getRole(ch.getSpec()) + ".png\">"
-				+ sChall
-				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span> "
-				+ ch.getSpec();
-		String altspec = "<img src=\"img/" + Lists.getRole(ch.getAltSpec()) + ".png\">"
-				+ altChall
-				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span> "
-				+ ch.getAltSpec();
 		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\" ><td>"
 				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName() +"/advanced\">" + ch.getName() + "</a></td>"
 				+ "<td>" + lists.getPClass(ch.getPlayerClass()) + "</td>"
 				+ "<td>" + spec + "</td>"
 				+ "<td>" + iLvl + "</td>"
-				+ "<td>" + altspec + "</td>"
+				+ "<td>" + altSpec + "</td>"
 				+ "<td>" + altiLvl + "</td>"
 				+ "<td>" + lists.getRank(ch.getRank()) + "</td>")
 				+ "<td>" + getAudit(ch) + "</td>"
