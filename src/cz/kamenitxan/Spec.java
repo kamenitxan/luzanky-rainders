@@ -5,13 +5,18 @@ import java.io.Serializable;
 public class Spec implements Serializable {
 	private String spec = "";
 	private int ilvl = 0;
+	private boolean active = false;
 
-	public String getSpec() {
+	public String getSpecName() {
 		return spec;
 	}
 
 	public void setSpec(String spec) {
 		this.spec = spec;
+	}
+	public void setSpec(String spec, boolean active) {
+		this.spec = spec;
+		this.active = active;
 	}
 
 	public int getIlvl() {
@@ -20,5 +25,9 @@ public class Spec implements Serializable {
 
 	public void setIlvl(int ilvl) {
 		this.ilvl = ilvl;
+	}
+
+	public boolean isActive() {
+		return active;
 	}
 }

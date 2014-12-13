@@ -201,17 +201,21 @@ public class Generator {
 		JsonObject spec = talents.getJsonObject(0);
 		String specs = spec.getJsonObject("spec").getString("name");
 		if (spec != null) {
-			character.setSpec(specs);
 			if (spec.size() == 7) {
+				character.setSpec(specs, true);
 				character.setIlvl(items.getInt("averageItemLevelEquipped"));
+			} else {
+				character.setSpec(specs, false);
 			}
 		}
 		spec = talents.getJsonObject(1);
 		specs = spec.getJsonObject("spec").getString("name");
 		if (spec != null) {
-			character.setAltSpec(specs);
 			if (spec.size() == 7) {
+				character.setAltSpec(specs, true);
 				character.setAltIlvl(items.getInt("averageItemLevelEquipped"));
+			} else {
+				character.setAltSpec(specs, false);
 			}
 		}
 
@@ -479,6 +483,7 @@ public class Generator {
 	private String createRow(Character ch){
 		String spec = "<img src=\"img/ch";
 		String altSpec = spec;
+		String specName, altSpecName;
 		int iLvl = ch.getIlvl();
 		int altiLvl = ch.getAltIlvl();
 		if (ch.getSpecChallenge(1) != 0) {
@@ -487,12 +492,19 @@ public class Generator {
 		if (ch.getSpecChallenge(2) != 0) {
 			altSpec += ch.getSpecChallenge(2) + ".png\">";
 		} else {altSpec = "";}
-		spec = "<img src=\"img/" + Lists.getRole(ch.getSpec()) + ".png\">" + spec
-				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span> "
-				+ ch.getSpec();
-		altSpec = "<img src=\"img/" + Lists.getRole(ch.getAltSpec()) + ".png\">" + altSpec
-				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec()) + lists.getRoleType(ch.getSpec()) + "</span> "
-				+ ch.getAltSpec();
+		if (ch.getSpec().isActive()) {
+			specName = ch.getSpec().getSpecName();
+			altSpecName = "<i>" + ch.getAltSpec().getSpecName() + "</i>";
+		} else {
+			specName = "<i>" + ch.getSpec().getSpecName() + "</i>";
+			altSpecName = ch.getAltSpec().getSpecName();
+		}
+		spec = "<img src=\"img/" + Lists.getRole(ch.getSpec().getSpecName()) + ".png\">" + spec
+				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec().getSpecName()) + lists.getRoleType(ch.getSpec().getSpecName()) + "</span> "
+				+ specName;
+		altSpec = "<img src=\"img/" + Lists.getRole(ch.getAltSpec().getSpecName()) + ".png\">" + altSpec
+				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec().getSpecName()) + lists.getRoleType(ch.getSpec().getSpecName()) + "</span> "
+				+ altSpecName;
 		if (altiLvl > iLvl) {
 			String t = spec;
 			spec = altSpec;
@@ -525,20 +537,20 @@ public class Generator {
 	}
 
 	private void countRole(Character ch) {
-		if (Lists.getRole(ch.getSpec()) == 3) {
+		if (Lists.getRole(ch.getSpec().getSpecName()) == 3) {
 			dpss += 1;
-		} else if (Lists.getRole(ch.getSpec()) == 2) {
+		} else if (Lists.getRole(ch.getSpec().getSpecName()) == 2) {
 			heals += 1;
-		} else if (Lists.getRole(ch.getSpec()) == 1) {
+		} else if (Lists.getRole(ch.getSpec().getSpecName()) == 1) {
 			tanks += 1;
 		}
-		if (Lists.getRole(ch.getAltSpec()) == 3 && Lists.getRole(ch.getSpec()) != Lists.getRole(ch.getAltSpec())) {
+		if (Lists.getRole(ch.getAltSpec().getSpecName()) == 3 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
 			adpss += 1;
 		}
-		if (Lists.getRole(ch.getAltSpec()) == 2 && Lists.getRole(ch.getSpec()) != Lists.getRole(ch.getAltSpec())) {
+		if (Lists.getRole(ch.getAltSpec().getSpecName()) == 2 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
 			aheals += 1;
 		}
-		if (Lists.getRole(ch.getAltSpec()) == 1 && Lists.getRole(ch.getSpec()) != Lists.getRole(ch.getAltSpec())) {
+		if (Lists.getRole(ch.getAltSpec().getSpecName()) == 1 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
 			atanks += 1;
 		}
 	}

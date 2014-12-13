@@ -168,20 +168,26 @@ public class Character implements Comparable{
 		this.title = title;
 	}
 
-	public String getSpec() {
-		return spec.getSpec();
+	public Spec getSpec() {
+		return spec;
 	}
 
 	public void setSpec(String spec) {
 		this.spec.setSpec(spec);
 	}
+	public void setSpec(String spec, boolean active) {
+		this.spec.setSpec(spec, active);
+	}
 
-	public String getAltSpec() {
-		return altSpec.getSpec();
+	public Spec getAltSpec() {
+		return altSpec;
 	}
 
 	public void setAltSpec(String altSpec) {
 		this.altSpec.setSpec(altSpec);
+	}
+	public void setAltSpec(String spec, boolean active) {
+		this.altSpec.setSpec(spec, active);
 	}
 
 	public String getPrimaryProf() {
@@ -298,9 +304,9 @@ public class Character implements Comparable{
 	 */
 	public int getSpecChallenge(int s) {
 		if (s == 1) {
-			s = Lists.getRole(getSpec());
+			s = Lists.getRole(spec.getSpecName());
 		}else {
-			s = Lists.getRole(getAltSpec());
+			s = Lists.getRole(spec.getSpecName());
 		}
 		switch (s) {
 			case 3: {return dpsChallenge;}
