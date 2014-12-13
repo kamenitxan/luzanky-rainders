@@ -5,10 +5,10 @@ import java.util.Map;
 
 public class Lists {
 	private static Lists singleton = new Lists();
-	private Map<Integer, Povolani> classes = null;
+	private Map<Integer, Povolani> classes;
 
 
-	class Povolani {
+	static class Povolani {
 		public String name;
 		public String color;
 		public Povolani(String name, String color) {
@@ -108,10 +108,10 @@ public class Lists {
 	}
 
 	public String getRoleType(String spec) {
-		int role = getRole(spec);
-		if (role == 1) return "tank";
-		if (role == 2) return "heal";
-		if (role == 3) return "dps";
+		final int role = getRole(spec);
+		if (role == 1) {return "tank";}
+		if (role == 2) {return "heal";}
+		if (role == 3) {return "dps";}
 		return "";
 	}
 

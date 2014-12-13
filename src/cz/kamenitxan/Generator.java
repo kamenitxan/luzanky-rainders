@@ -33,8 +33,7 @@ public class Generator {
 	private String realm = "Thunderhorn";
 	private final int ILVL = 500;
 
-	private final String databaseUrl = "jdbc:sqlite:raiders.db";
-	private Dao<Character, String> dao = null;
+	private Dao<Character, String> dao;
 
 	private int tanks = 0;
 	private int heals = 0;
@@ -52,7 +51,8 @@ public class Generator {
 			e.printStackTrace();
 		}
 		try {
-			ConnectionSource connectionSource = new JdbcConnectionSource(databaseUrl);
+			final String databaseUrl = "jdbc:sqlite:raiders.db";
+			final ConnectionSource connectionSource = new JdbcConnectionSource(databaseUrl);
 			dao = DaoManager.createDao(connectionSource, Character.class);
 			if (!dao.isTableExists()) {
 				TableUtils.createTable(connectionSource, Character.class);
@@ -76,39 +76,36 @@ public class Generator {
 	private void queryGuild() {
 		System.out.println("Běh zahájen");
 		InputStream is = null;
+		final String host = "http://eu.battle.net/api/";
 		while (is == null) {
 			try {
-				String host = "http://eu.battle.net/api/";
-				URL url = new URL(host + "wow/guild/" + realm + "/" + guildName +
-						"?fields=members");
+				final URL url = new URL(host + "wow/guild/" + realm + "/" + guildName + "?fields=members");
 				is = url.openStream();
 			} catch (FileNotFoundException ex) {
 				System.out.println(ex.getLocalizedMessage());
 				System.out.println(ex.getMessage());
-				String error = "Postava  na serveru nenalezena";
+				final String error = "Postava  na serveru nenalezena";
 				System.out.println(error);
 			} catch (IOException ex) {
-				String error = ex.getLocalizedMessage();
-				System.out.println(error);
-			} catch (Exception ex) {
-				ex.printStackTrace();
+				System.out.println(ex.getLocalizedMessage());
 			}
 		}
 		JsonReader jsonReader;
 		JsonObject jsonObject;
-		JsonArray members = null;
+		JsonArray members;
 		try{
 			jsonReader = Json.createReader(is);
 			jsonObject = jsonReader.readObject();
 			members = jsonObject.getJsonArray("members");
 			members.forEach(m -> addChar(m));
 		} catch (JsonParsingException ex) {
-			ex.getMessage();
-			BufferedReader in = new BufferedReader(new InputStreamReader(is));
+			System.out.println(ex.getMessage());
+			final BufferedReader in = new BufferedReader(new InputStreamReader(is));
 			String inputLine;
 			try {
-				while ((inputLine = in.readLine()) != null)
+				while ((inputLine = in.readLine()) != null) {
 					System.out.println(inputLine);
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -116,25 +113,25 @@ public class Generator {
 	}
 
 	private void addChar(JsonValue ch) {
-		JsonObject JsonCharacter = (JsonObject) ch;
-		int rank = JsonCharacter.getInt("rank");
-		JsonCharacter = JsonCharacter.getJsonObject("character");
-		if (JsonCharacter.getInt("level") == 100) {
+		JsonObject jsonCharacter = (JsonObject) ch;
+		final int rank = jsonCharacter.getInt("rank");
+		jsonCharacter = jsonCharacter.getJsonObject("character");
+		if (jsonCharacter.getInt("level") == 100) {
 			try {
-				if (!dao.idExists(JsonCharacter.getString("name"))) {
-					Character character = new Character(realm, JsonCharacter.getString("name"), rank);
+				if (!dao.idExists(jsonCharacter.getString("name"))) {
+					final Character character = new Character(realm, jsonCharacter.getString("name"), rank);
 					dao.createIfNotExists(character);
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 
-			//characters.add(new Character(realm, JsonCharacter.getString("name"), rank));
+			//characters.add(new Character(realm, jsonCharacter.getString("name"), rank));
 		}
 	}
 
 	private void getData() {
-		ExecutorService executor = Executors.newFixedThreadPool(16);
+		final ExecutorService executor = Executors.newFixedThreadPool(16);
 
 		for (Character character : dao) {
 			executor.submit(() -> queryAPI(character));
@@ -155,18 +152,18 @@ public class Generator {
 		InputStream is = null;
 		while (is == null) {
 			try{
-				String host = "http://eu.battle.net/api/";
-				URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName() +
+				final String host = "http://eu.battle.net/api/";
+				final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName() +
 						"?fields=guild,items,titles,talents,professions,achievements");
 				// System.out.println(url.toString());
-				HttpURLConnection con = (HttpURLConnection) url.openConnection();
+				final HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setReadTimeout(1500); //1,5 vteřiny
 
 				is = con.getInputStream();
 			} catch (FileNotFoundException ex) {
 				//System.out.println(ex.getLocalizedMessage());
 				//System.out.println(ex.getMessage());
-				String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
+				final String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
 				System.out.println(error);
 				try {
 					dao.delete(character);
@@ -175,53 +172,47 @@ public class Generator {
 				}
 				return;
 			} catch (IOException ex) {
-				String error = ex.getLocalizedMessage();
+				final String error = ex.getLocalizedMessage();
 				System.out.println("IOEX "+ character.getName() + ": " + error);
 				if (error.contains("Read timed out")) {
 					timeOuts++;
 				}
 				Thread.yield();
-			} catch (Exception ex) {
-				ex.printStackTrace();
 			}
 		}
 
 		// FIX: ošetření, když nejde internet
-		JsonReader jsonReader = Json.createReader(is);
-		JsonObject jsonObject = jsonReader.readObject();
+		final JsonReader jsonReader = Json.createReader(is);
+		final JsonObject jsonObject = jsonReader.readObject();
 
 		// System.out.println(jsonObject.toString());
 
-		JsonObject guild = jsonObject.getJsonObject("guild");
-		JsonObject items = jsonObject.getJsonObject("items");
-		JsonArray titles = jsonObject.getJsonArray("titles");
-		JsonArray talents = jsonObject.getJsonArray("talents");
-		JsonArray achievements = jsonObject.getJsonObject("achievements").getJsonArray("achievementsCompleted");
+		final JsonObject guild = jsonObject.getJsonObject("guild");
+		final JsonObject items = jsonObject.getJsonObject("items");
+		final JsonArray titles = jsonObject.getJsonArray("titles");
+		final JsonArray talents = jsonObject.getJsonArray("talents");
+		final JsonArray achievements = jsonObject.getJsonObject("achievements").getJsonArray("achievementsCompleted");
 
 		JsonObject spec = talents.getJsonObject(0);
 		String specs = spec.getJsonObject("spec").getString("name");
-		if (spec != null) {
-			if (spec.size() == 7) {
-				character.setSpec(specs, true);
-				character.setIlvl(items.getInt("averageItemLevelEquipped"));
-			} else {
-				character.setSpec(specs, false);
-			}
+		if (spec.size() == 7) {
+			character.setSpec(specs, true);
+			character.setIlvl(items.getInt("averageItemLevelEquipped"));
+		} else {
+			character.setSpec(specs, false);
 		}
 		spec = talents.getJsonObject(1);
 		specs = spec.getJsonObject("spec").getString("name");
-		if (spec != null) {
-			if (spec.size() == 7) {
-				character.setAltSpec(specs, true);
-				character.setAltIlvl(items.getInt("averageItemLevelEquipped"));
-			} else {
-				character.setAltSpec(specs, false);
-			}
+		if (spec.size() == 7) {
+			character.setAltSpec(specs, true);
+			character.setAltIlvl(items.getInt("averageItemLevelEquipped"));
+		} else {
+			character.setAltSpec(specs, false);
 		}
 
-		JsonObject professions = jsonObject.getJsonObject("professions");
-		JsonObject primary_prof = professions.getJsonArray("primary").getJsonObject(0);
-		JsonObject secondary_prof = professions.getJsonArray("primary").getJsonObject(1);
+		final JsonObject professions = jsonObject.getJsonObject("professions");
+		final JsonObject primary_prof = professions.getJsonArray("primary").getJsonObject(0);
+		final JsonObject secondary_prof = professions.getJsonArray("primary").getJsonObject(1);
 
 
 		jsonReader.close();
@@ -235,7 +226,7 @@ public class Generator {
 		character.setAvatar(jsonObject.getString("thumbnail"));
 		character.setGuild(guild.getString("name"));
 		for (JsonValue i : titles) {
-			JsonObject title = (JsonObject) i;
+			final JsonObject title = (JsonObject) i;
 			if (title.size() == 3) {
 				character.setTitle(title.getString("name"));
 			}
@@ -277,75 +268,75 @@ public class Generator {
 	}
 
 	private void processAudit(JsonObject items, Character ch) {
-		int lowerILV = 630;
-		int higherIVL = 650;
+		final int lowerILV = 630;
+		final int higherIVL = 650;
 		ch.setMissingGems(false);
 
-		JsonObject head = items.getJsonObject("head");
+		final JsonObject head = items.getJsonObject("head");
 		if (head.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, head);
 		}
-		JsonObject neck = items.getJsonObject("neck");
+		final JsonObject neck = items.getJsonObject("neck");
 		if (neck.getInt("itemLevel") >= lowerILV) {
 			if (neck.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setNeckEnch(false);}
 			else {ch.setNeckEnch(true);}
 			checkGem(ch, neck);
 		}
-		JsonObject shoulder = items.getJsonObject("shoulder");
+		final JsonObject shoulder = items.getJsonObject("shoulder");
 		if (shoulder.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, shoulder);
 		}
-		JsonObject back = items.getJsonObject("back");
+		final JsonObject back = items.getJsonObject("back");
 		if (back.getInt("itemLevel") >= lowerILV) {
 			if (back.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setBackEnch(false);}
 			else {ch.setBackEnch(true);}
 			checkGem(ch, back);
 		}
-		JsonObject chest = items.getJsonObject("chest");
+		final JsonObject chest = items.getJsonObject("chest");
 		if (chest.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, chest);
 		}
-		JsonObject wrist = items.getJsonObject("wrist");
+		final JsonObject wrist = items.getJsonObject("wrist");
 		if (wrist.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, wrist);
 		}
-		JsonObject hands = items.getJsonObject("hands");
+		final JsonObject hands = items.getJsonObject("hands");
 		if (hands.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, hands);
 		}
-		JsonObject waist = items.getJsonObject("waist");
+		final JsonObject waist = items.getJsonObject("waist");
 		if (waist.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, waist);
 		}
-		JsonObject legs = items.getJsonObject("legs");
+		final JsonObject legs = items.getJsonObject("legs");
 		if (legs.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, legs);
 		}
-		JsonObject feet = items.getJsonObject("feet");
+		final JsonObject feet = items.getJsonObject("feet");
 		if (feet.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, feet);
 		}
-		JsonObject ring1 = items.getJsonObject("finger1");
+		final JsonObject ring1 = items.getJsonObject("finger1");
 		if (ring1.getInt("itemLevel") >= lowerILV) {
 			if (ring1.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setRing1Ench(false);}
 			else {ch.setRing1Ench(true);}
 			checkGem(ch, ring1);
 		}
-		JsonObject ring2 = items.getJsonObject("finger2");
+		final JsonObject ring2 = items.getJsonObject("finger2");
 		if (ring2.getInt("itemLevel") >= lowerILV) {
 			if (ring2.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setRing2Ench(false);}
 			else {ch.setRing2Ench(true);}
 			checkGem(ch, ring2);
 		}
-		JsonObject trinket1 = items.getJsonObject("trinket1");
+		final JsonObject trinket1 = items.getJsonObject("trinket1");
 		if (trinket1.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, trinket1);
 		}
-		JsonObject trinket2 = items.getJsonObject("trinket2");
+		final JsonObject trinket2 = items.getJsonObject("trinket2");
 		if (trinket2.getInt("itemLevel") >= lowerILV) {
 			checkGem(ch, trinket2);
 		}
-		JsonObject weapon = items.getJsonObject("mainHand");
+		final JsonObject weapon = items.getJsonObject("mainHand");
 		if (weapon.getInt("itemLevel") >= higherIVL) {
 			if (weapon.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setWeaponEnch(false);}
 			else {ch.setWeaponEnch(true);}
@@ -359,7 +350,7 @@ public class Generator {
 	}
 	private void checkGem(Character ch, JsonObject item) {
 		if (item.getJsonArray("bonusLists").size() > 1) {
-			String bL = item.getJsonArray("bonusLists").toString();
+			final String bL = item.getJsonArray("bonusLists").toString();
 			if (bL.contains(String.valueOf(523)) && bL.contains(String.valueOf(524))) {
 				if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
 					ch.setMissingGems(true);
@@ -410,8 +401,8 @@ public class Generator {
 			}
 		}
 
-		StringWriter sw = new StringWriter();
-		Html html = new Html(sw);
+		final StringWriter sw = new StringWriter();
+		final Html html = new Html(sw);
 
 		html.html();
 		html.head();
@@ -464,7 +455,7 @@ public class Generator {
 					 		  "});").end();
 			html.endAll();
 
-		String result = sw.getBuffer().toString();
+		final String result = sw.getBuffer().toString();
 		try {
 			Files.write(Paths.get("raiders.html"), result.getBytes());
 		} catch (IOException e) {
@@ -506,12 +497,12 @@ public class Generator {
 				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec().getSpecName()) + lists.getRoleType(ch.getSpec().getSpecName()) + "</span> "
 				+ altSpecName;
 		if (altiLvl > iLvl) {
-			String t = spec;
+			final String t = spec;
 			spec = altSpec;
 			altSpec = t;
 		}
 		if (altiLvl > iLvl) {
-			int t = iLvl;
+			final int t = iLvl;
 			iLvl = altiLvl;
 			altiLvl = t;
 		}
@@ -528,10 +519,10 @@ public class Generator {
 	}
 
 	private String getTime(){
-		DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-		Date today = Calendar.getInstance().getTime();
-		String reportDate = df.format(today);
-		double cas = (System.nanoTime() - Main.startTime) / 1000000000;
+		final DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+		final Date today = Calendar.getInstance().getTime();
+		final String reportDate = df.format(today);
+		final double cas = (System.nanoTime() - Main.startTime) / 1000000000;
 
 		return "Generováno " + reportDate + ". Export trval " + cas + " s";
 	}

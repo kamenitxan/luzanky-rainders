@@ -306,7 +306,7 @@ public class Character implements Comparable{
 		if (s == 1) {
 			s = Lists.getRole(spec.getSpecName());
 		}else {
-			s = Lists.getRole(spec.getSpecName());
+			s = Lists.getRole(altSpec.getSpecName());
 		}
 		switch (s) {
 			case 3: {return dpsChallenge;}
