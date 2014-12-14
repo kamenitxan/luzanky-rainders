@@ -33,7 +33,7 @@ public class Generator {
 	private String realm = "Thunderhorn";
 	private final int ILVL = 500;
 
-	private Dao<Character, String> dao;
+	private Dao<Character, String> dao = null;
 
 	private int tanks = 0;
 	private int heals = 0;
@@ -194,19 +194,21 @@ public class Generator {
 		final JsonArray achievements = jsonObject.getJsonObject("achievements").getJsonArray("achievementsCompleted");
 
 		JsonObject spec = talents.getJsonObject(0);
-		String specs = spec.getJsonObject("spec").getString("name");
 		if (spec.size() == 7) {
+			final String specs = spec.getJsonObject("spec").getString("name", null);
 			character.setSpec(specs, true);
 			character.setIlvl(items.getInt("averageItemLevelEquipped"));
-		} else {
+		} else if (spec.size() == 6){
+			final String specs = spec.getJsonObject("spec").getString("name", null);
 			character.setSpec(specs, false);
 		}
 		spec = talents.getJsonObject(1);
-		specs = spec.getJsonObject("spec").getString("name");
 		if (spec.size() == 7) {
+			final String specs = spec.getJsonObject("spec").getString("name", null);
 			character.setAltSpec(specs, true);
 			character.setAltIlvl(items.getInt("averageItemLevelEquipped"));
-		} else {
+		} else if (spec.size() == 6){
+			final String specs = spec.getJsonObject("spec").getString("name", null);
 			character.setAltSpec(specs, false);
 		}
 
@@ -448,10 +450,10 @@ public class Generator {
 
 		html.p().text(getTime()).end();
 		html.p().text("Timeouts: " + timeOuts).end();
-		html.script().raw("$(function(){\n" +
+		html.script().raw("$(function(){" +
 				"		$(\"#myTable\").tablesorter(" +
 									"{theme: 'dark', widgets: [\"zebra\", \"filter\"],}" +
-									");\n" +
+									");" +
 					 		  "});").end();
 			html.endAll();
 
