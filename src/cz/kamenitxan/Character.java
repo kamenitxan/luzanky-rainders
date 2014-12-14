@@ -58,6 +58,8 @@ public class Character implements Comparable{
 	private int tankChallenge = 0;
 	@DatabaseField
 	private int healChallenge = 0;
+	@DatabaseField
+	private int lastModified = 0;
 
 	public Character() {}
 
@@ -314,6 +316,14 @@ public class Character implements Comparable{
 			case 2: {return healChallenge;}
 		}
 		return 0;
+	}
+
+	public int getLastModified() {
+		return lastModified;
+	}
+
+	public void setLastModified(int lastModified) {
+		this.lastModified = lastModified;
 	}
 
 	@Override

@@ -153,16 +153,13 @@ public class Generator {
 		while (is == null) {
 			try{
 				final String host = "http://eu.battle.net/api/";
-				final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName() +
-						"?fields=guild,items,titles,talents,professions,achievements");
+				final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName());
 				// System.out.println(url.toString());
 				final HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setReadTimeout(1500); //1,5 vteřiny
 
 				is = con.getInputStream();
 			} catch (FileNotFoundException ex) {
-				//System.out.println(ex.getLocalizedMessage());
-				//System.out.println(ex.getMessage());
 				final String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
 				System.out.println(error);
 				try {
@@ -180,92 +177,151 @@ public class Generator {
 				Thread.yield();
 			}
 		}
+		JsonReader jsonReader = Json.createReader(is);
+		JsonObject jsonObject = jsonReader.readObject();
+		final int lastModified = jsonObject.getInt("lastModified");
 
-		// FIX: ošetření, když nejde internet
-		final JsonReader jsonReader = Json.createReader(is);
-		final JsonObject jsonObject = jsonReader.readObject();
+		if (lastModified != character.getLastModified()) {
+			System.out.println(character.getName() + "aktualizovnán");
+			is = null;
+			character.setLastModified(lastModified);
+			while (is == null) {
+				try {
+					final String host = "http://eu.battle.net/api/";
+					final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" + character.getName() +
+							"?fields=guild,items,titles,talents,professions,achievements");
+					// System.out.println(url.toString());
+					final HttpURLConnection con = (HttpURLConnection) url.openConnection();
+					con.setReadTimeout(1500); //1,5 vteřiny
 
-		// System.out.println(jsonObject.toString());
-
-		final JsonObject guild = jsonObject.getJsonObject("guild");
-		final JsonObject items = jsonObject.getJsonObject("items");
-		final JsonArray titles = jsonObject.getJsonArray("titles");
-		final JsonArray talents = jsonObject.getJsonArray("talents");
-		final JsonArray achievements = jsonObject.getJsonObject("achievements").getJsonArray("achievementsCompleted");
-
-		JsonObject spec = talents.getJsonObject(0);
-		if (spec.size() == 7) {
-			final String specs = spec.getJsonObject("spec").getString("name", null);
-			character.setSpec(specs, true);
-			character.setIlvl(items.getInt("averageItemLevelEquipped"));
-		} else if (spec.size() == 6){
-			final String specs = spec.getJsonObject("spec").getString("name", null);
-			character.setSpec(specs, false);
-		}
-		spec = talents.getJsonObject(1);
-		if (spec.size() == 7) {
-			final String specs = spec.getJsonObject("spec").getString("name", null);
-			character.setAltSpec(specs, true);
-			character.setAltIlvl(items.getInt("averageItemLevelEquipped"));
-		} else if (spec.size() == 6){
-			final String specs = spec.getJsonObject("spec").getString("name", null);
-			character.setAltSpec(specs, false);
-		}
-
-		final JsonObject professions = jsonObject.getJsonObject("professions");
-		final JsonObject primary_prof = professions.getJsonArray("primary").getJsonObject(0);
-		final JsonObject secondary_prof = professions.getJsonArray("primary").getJsonObject(1);
-
-
-		jsonReader.close();
-
-		character.setLvl(jsonObject.getInt("level"));
-		character.setPlayerClass(jsonObject.getInt("class"));
-		character.setRace(jsonObject.getInt("race"));
-		character.setPlayerClass(jsonObject.getInt("class"));
-		character.setGender(jsonObject.getInt("gender"));
-		character.setAchievementPoints(jsonObject.getInt("achievementPoints"));
-		character.setAvatar(jsonObject.getString("thumbnail"));
-		character.setGuild(guild.getString("name"));
-		for (JsonValue i : titles) {
-			final JsonObject title = (JsonObject) i;
-			if (title.size() == 3) {
-				character.setTitle(title.getString("name"));
+					is = con.getInputStream();
+				} catch (FileNotFoundException ex) {
+					final String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
+					System.out.println(error);
+					return;
+				} catch (IOException ex) {
+					final String error = ex.getLocalizedMessage();
+					System.out.println("IOEX " + character.getName() + ": " + error);
+					if (error.contains("Read timed out")) {
+						timeOuts++;
+					}
+					Thread.yield();
+				}
 			}
-		}
-		character.setPrimaryProf(primary_prof.getString("name"));
-		character.setPrimaryProfLvl(primary_prof.getInt("rank"));
-		character.setSecondaryProf(secondary_prof.getString("name"));
-		character.setSecondaryProfLvl(secondary_prof.getInt("rank"));
 
-		character.setTankChallenge(0);
-		character.setHealChallenge(0);
-		character.setDpsChallenge(0);
-		achievements.stream().filter(a -> Integer.parseInt(a.toString()) > 9570 && Integer.parseInt(a.toString()) < 9590).forEach(a -> {
-			switch (Integer.parseInt(a.toString())) {
-				case 9578: {character.setTankChallenge(1); break;}
-				case 9579: {character.setTankChallenge(2); break;}
-				case 9580: {character.setTankChallenge(3); break;}
-				case 9584: {character.setHealChallenge(1); break;}
-				case 9585: {character.setHealChallenge(2); break;}
-				case 9586: {character.setHealChallenge(3); break;}
-				case 9572: {character.setDpsChallenge(1); break;}
-				case 9573: {character.setDpsChallenge(2); break;}
-				case 9574: {character.setDpsChallenge(3); break;}
+			// FIX: ošetření, když nejde internet
+			jsonReader = Json.createReader(is);
+			jsonObject = jsonReader.readObject();
+
+			// System.out.println(jsonObject.toString());
+
+			final JsonObject guild = jsonObject.getJsonObject("guild");
+			final JsonObject items = jsonObject.getJsonObject("items");
+			final JsonArray titles = jsonObject.getJsonArray("titles");
+			final JsonArray talents = jsonObject.getJsonArray("talents");
+			final JsonArray achievements = jsonObject.getJsonObject("achievements").getJsonArray("achievementsCompleted");
+
+			JsonObject spec = talents.getJsonObject(0);
+			if (spec.size() == 7) {
+				final String specs = spec.getJsonObject("spec").getString("name", null);
+				character.setSpec(specs, true);
+				character.setIlvl(items.getInt("averageItemLevelEquipped"));
+			} else if (spec.size() == 6) {
+				final String specs = spec.getJsonObject("spec").getString("name", null);
+				character.setSpec(specs, false);
 			}
-		});
+			spec = talents.getJsonObject(1);
+			if (spec.size() == 7) {
+				final String specs = spec.getJsonObject("spec").getString("name", null);
+				character.setAltSpec(specs, true);
+				character.setAltIlvl(items.getInt("averageItemLevelEquipped"));
+			} else if (spec.size() == 6) {
+				final String specs = spec.getJsonObject("spec").getString("name", null);
+				character.setAltSpec(specs, false);
+			}
 
-		processAudit(items, character);
-		//System.out.println(jsonObject.toString());
+			final JsonObject professions = jsonObject.getJsonObject("professions");
+			final JsonObject primary_prof = professions.getJsonArray("primary").getJsonObject(0);
+			final JsonObject secondary_prof = professions.getJsonArray("primary").getJsonObject(1);
 
-		if (character.getTitle() == null) {
-			character.setTitle("");
-		}
 
-		try {
-			dao.createOrUpdate(character);
-		} catch (SQLException e) {
-			e.printStackTrace();
+			jsonReader.close();
+
+			character.setLvl(jsonObject.getInt("level"));
+			character.setPlayerClass(jsonObject.getInt("class"));
+			character.setRace(jsonObject.getInt("race"));
+			character.setPlayerClass(jsonObject.getInt("class"));
+			character.setGender(jsonObject.getInt("gender"));
+			character.setAchievementPoints(jsonObject.getInt("achievementPoints"));
+			character.setAvatar(jsonObject.getString("thumbnail"));
+			character.setGuild(guild.getString("name"));
+			for (JsonValue i : titles) {
+				final JsonObject title = (JsonObject) i;
+				if (title.size() == 3) {
+					character.setTitle(title.getString("name"));
+				}
+			}
+			character.setPrimaryProf(primary_prof.getString("name"));
+			character.setPrimaryProfLvl(primary_prof.getInt("rank"));
+			character.setSecondaryProf(secondary_prof.getString("name"));
+			character.setSecondaryProfLvl(secondary_prof.getInt("rank"));
+
+			character.setTankChallenge(0);
+			character.setHealChallenge(0);
+			character.setDpsChallenge(0);
+			achievements.stream().filter(a -> Integer.parseInt(a.toString()) > 9570 && Integer.parseInt(a.toString()) < 9590).forEach(a -> {
+				switch (Integer.parseInt(a.toString())) {
+					case 9578: {
+						character.setTankChallenge(1);
+						break;
+					}
+					case 9579: {
+						character.setTankChallenge(2);
+						break;
+					}
+					case 9580: {
+						character.setTankChallenge(3);
+						break;
+					}
+					case 9584: {
+						character.setHealChallenge(1);
+						break;
+					}
+					case 9585: {
+						character.setHealChallenge(2);
+						break;
+					}
+					case 9586: {
+						character.setHealChallenge(3);
+						break;
+					}
+					case 9572: {
+						character.setDpsChallenge(1);
+						break;
+					}
+					case 9573: {
+						character.setDpsChallenge(2);
+						break;
+					}
+					case 9574: {
+						character.setDpsChallenge(3);
+						break;
+					}
+				}
+			});
+
+			processAudit(items, character);
+			//System.out.println(jsonObject.toString());
+
+			if (character.getTitle() == null) {
+				character.setTitle("");
+			}
+
+			try {
+				dao.createOrUpdate(character);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
