@@ -67,8 +67,8 @@ public class Character implements Comparable{
 		this.realm = realm;
 		this.name = name;
 		this.rank = rank;
-		this.spec = new Spec();
-		this.altSpec = new Spec();
+		this.spec = null;
+		this.altSpec = null;
 	}
 
 	public int getRace() {
@@ -148,14 +148,22 @@ public class Character implements Comparable{
 	}
 
 	public int getIlvl() {
-		return spec.getIlvl();
+		if (spec != null) {
+			return spec.getIlvl();
+		} else {
+			return 0;
+		}
 	}
 
 	public void setIlvl(int ilvl) {
 		this.spec.setIlvl(ilvl);
 	}
 	public int getAltIlvl() {
-		return altSpec.getIlvl();
+		if (altSpec != null) {
+			return altSpec.getIlvl();
+		} else {
+			return 0;
+		}
 	}
 
 	public void setAltIlvl(int ilvl) {
@@ -175,9 +183,15 @@ public class Character implements Comparable{
 	}
 
 	public void setSpec(String spec) {
+		if (spec == null) {
+			this.spec = new Spec();
+		}
 		this.spec.setSpec(spec);
 	}
 	public void setSpec(String spec, boolean active) {
+		if (spec == null) {
+			this.spec = new Spec();
+		}
 		this.spec.setSpec(spec, active);
 	}
 
@@ -186,9 +200,15 @@ public class Character implements Comparable{
 	}
 
 	public void setAltSpec(String altSpec) {
+		if (altSpec == null) {
+			this.altSpec = new Spec();
+		}
 		this.altSpec.setSpec(altSpec);
 	}
 	public void setAltSpec(String spec, boolean active) {
+		if (altSpec == null) {
+			this.altSpec = new Spec();
+		}
 		this.altSpec.setSpec(spec, active);
 	}
 
@@ -305,12 +325,17 @@ public class Character implements Comparable{
 	 * @return level of proving ground for spec
 	 */
 	public int getSpecChallenge(int s) {
+		int i = 0;
 		if (s == 1) {
-			s = Lists.getRole(spec.getSpecName());
+			if (spec != null) {
+				i = Lists.getRole(spec.getSpecName());
+			}
 		}else {
-			s = Lists.getRole(altSpec.getSpecName());
+			if (altSpec != null) {
+				i = Lists.getRole(altSpec.getSpecName());
+			}
 		}
-		switch (s) {
+		switch (i) {
 			case 3: {return dpsChallenge;}
 			case 1: {return tankChallenge;}
 			case 2: {return healChallenge;}

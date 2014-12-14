@@ -74,7 +74,7 @@ public class Lists {
 	 * @return 1 tank, 2 heal 3 dmg
 	 */
 	public static int getRole(String spec) {
-		if (spec == null) {
+		if (spec == null || spec.equals("")) {
 			return 0;
 		}
 		if (spec.equals("Guardian")) {

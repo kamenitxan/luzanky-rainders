@@ -43,6 +43,7 @@ public class Generator {
 	private int adpss = 0;
 
 	private int timeOuts = 0;
+	private int updates = 0;
 
 	public Generator() {
 		try {
@@ -182,9 +183,11 @@ public class Generator {
 		final int lastModified = jsonObject.getInt("lastModified");
 
 		if (lastModified != character.getLastModified()) {
-			System.out.println(character.getName() + "aktualizovnán");
+			System.out.println(character.getName() + " aktualizovnán");
 			is = null;
+			System.out.println(character.getLastModified() + " " + lastModified);
 			character.setLastModified(lastModified);
+			updates++;
 			while (is == null) {
 				try {
 					final String host = "http://eu.battle.net/api/";
@@ -505,7 +508,7 @@ public class Generator {
 		}
 
 		html.p().text(getTime()).end();
-		html.p().text("Timeouts: " + timeOuts).end();
+		html.p().text("Timeouts: " + timeOuts + " Postav aktualizováno: " + updates).end();
 		html.script().raw("$(function(){" +
 				"		$(\"#myTable\").tablesorter(" +
 									"{theme: 'dark', widgets: [\"zebra\", \"filter\"],}" +
@@ -532,7 +535,7 @@ public class Generator {
 	private String createRow(Character ch){
 		String spec = "<img src=\"img/ch";
 		String altSpec = spec;
-		String specName, altSpecName;
+		String specName, altSpecName = "";
 		int iLvl = ch.getIlvl();
 		int altiLvl = ch.getAltIlvl();
 		if (ch.getSpecChallenge(1) != 0) {
@@ -543,17 +546,29 @@ public class Generator {
 		} else {altSpec = "";}
 		if (ch.getSpec().isActive()) {
 			specName = ch.getSpec().getSpecName();
-			altSpecName = "<i>" + ch.getAltSpec().getSpecName() + "</i>";
+			if (ch.getAltSpec() != null) {
+				altSpecName = "<i>" + ch.getAltSpec().getSpecName() + "</i>";
+			}
 		} else {
 			specName = "<i>" + ch.getSpec().getSpecName() + "</i>";
 			altSpecName = ch.getAltSpec().getSpecName();
 		}
+		String roles;
+		if (ch.getAltSpec() != null) {
+			roles = lists.getRoleType(ch.getAltSpec().getSpecName()) + lists.getRoleType(ch.getSpec().getSpecName());
+		}else {
+			roles = lists.getRoleType(ch.getSpec().getSpecName());
+		}
 		spec = "<img src=\"img/" + Lists.getRole(ch.getSpec().getSpecName()) + ".png\">" + spec
-				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec().getSpecName()) + lists.getRoleType(ch.getSpec().getSpecName()) + "</span> "
+				+ "<span class=\"role\">" + roles + "</span> "
 				+ specName;
-		altSpec = "<img src=\"img/" + Lists.getRole(ch.getAltSpec().getSpecName()) + ".png\">" + altSpec
-				+ "<span class=\"role\">" + lists.getRoleType(ch.getAltSpec().getSpecName()) + lists.getRoleType(ch.getSpec().getSpecName()) + "</span> "
-				+ altSpecName;
+		if (ch.getAltSpec() != null) {
+			altSpec = "<img src=\"img/" + Lists.getRole(ch.getAltSpec().getSpecName()) + ".png\">" + altSpec
+					+ "<span class=\"role\">" + roles + "</span> "
+					+ altSpecName;
+		}else {
+			altSpec = "";
+		}
 		if (altiLvl > iLvl) {
 			final String t = spec;
 			spec = altSpec;
@@ -586,21 +601,25 @@ public class Generator {
 	}
 
 	private void countRole(Character ch) {
-		if (Lists.getRole(ch.getSpec().getSpecName()) == 3) {
-			dpss += 1;
-		} else if (Lists.getRole(ch.getSpec().getSpecName()) == 2) {
-			heals += 1;
-		} else if (Lists.getRole(ch.getSpec().getSpecName()) == 1) {
-			tanks += 1;
+		if (ch.getSpec() != null){
+			if (Lists.getRole(ch.getSpec().getSpecName()) == 3) {
+				dpss += 1;
+			} else if (Lists.getRole(ch.getSpec().getSpecName()) == 2) {
+				heals += 1;
+			} else if (Lists.getRole(ch.getSpec().getSpecName()) == 1) {
+				tanks += 1;
+			}
 		}
-		if (Lists.getRole(ch.getAltSpec().getSpecName()) == 3 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
-			adpss += 1;
-		}
-		if (Lists.getRole(ch.getAltSpec().getSpecName()) == 2 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
-			aheals += 1;
-		}
-		if (Lists.getRole(ch.getAltSpec().getSpecName()) == 1 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
-			atanks += 1;
+		if (ch.getAltSpec() != null) {
+			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 3 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
+				adpss += 1;
+			}
+			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 2 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
+				aheals += 1;
+			}
+			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 1 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
+				atanks += 1;
+			}
 		}
 	}
 

@@ -3,7 +3,7 @@ package cz.kamenitxan;
 import java.io.Serializable;
 
 public class Spec implements Serializable {
-	private String spec = "";
+	private String spec = null;
 	private int ilvl = 0;
 	private boolean active = false;
 
