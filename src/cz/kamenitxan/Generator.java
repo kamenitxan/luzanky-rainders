@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
@@ -133,7 +134,6 @@ public class Generator {
 
 	private void getData() {
 		final ExecutorService executor = Executors.newFixedThreadPool(16);
-
 		for (Character character : dao) {
 			executor.submit(() -> queryAPI(character));
 		}
@@ -144,9 +144,9 @@ public class Generator {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		//for (Character character : dao) {
-		//	queryAPI(character);
-		//}
+//		for (Character character : dao) {
+//			queryAPI(character);
+//		}
 	}
 
 	private void queryAPI(Character character) {
@@ -182,10 +182,10 @@ public class Generator {
 		JsonObject jsonObject = jsonReader.readObject();
 		final int lastModified = jsonObject.getInt("lastModified");
 
-		if (lastModified != character.getLastModified()) {
-			System.out.println(character.getName() + " aktualizovnán");
+		if (lastModified == character.getLastModified()) {
+			//System.out.println(character.getName() + " aktualizovnán");
 			is = null;
-			System.out.println(character.getLastModified() + " " + lastModified);
+			//System.out.println(character.getLastModified() + " teď: " + lastModified);
 			character.setLastModified(lastModified);
 			updates++;
 			while (is == null) {
@@ -198,10 +198,6 @@ public class Generator {
 					con.setReadTimeout(1500); //1,5 vteřiny
 
 					is = con.getInputStream();
-				} catch (FileNotFoundException ex) {
-					final String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
-					System.out.println(error);
-					return;
 				} catch (IOException ex) {
 					final String error = ex.getLocalizedMessage();
 					System.out.println("IOEX " + character.getName() + ": " + error);
@@ -258,12 +254,12 @@ public class Generator {
 			character.setAchievementPoints(jsonObject.getInt("achievementPoints"));
 			character.setAvatar(jsonObject.getString("thumbnail"));
 			character.setGuild(guild.getString("name"));
-			for (JsonValue i : titles) {
+			/*for (JsonValue i : titles) {
 				final JsonObject title = (JsonObject) i;
 				if (title.size() == 3) {
 					character.setTitle(title.getString("name"));
 				}
-			}
+			}*/
 			character.setPrimaryProf(primary_prof.getString("name"));
 			character.setPrimaryProfLvl(primary_prof.getInt("rank"));
 			character.setSecondaryProf(secondary_prof.getString("name"));
@@ -321,7 +317,7 @@ public class Generator {
 			}
 
 			try {
-				dao.createOrUpdate(character);
+				dao.update(character);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -410,13 +406,30 @@ public class Generator {
 		}
 	}
 	private void checkGem(Character ch, JsonObject item) {
-		if (item.getJsonArray("bonusLists").size() > 1) {
+		if (item.getJsonArray("bonusLists").size() >= 1) {
+			// 563, 564, 565
+			ArrayList<Integer> sockets = new ArrayList<>();
+			sockets.add(523);
+			sockets.add(563);
+			sockets.add(564);
+			sockets.add(565);
 			final String bL = item.getJsonArray("bonusLists").toString();
-			if (bL.contains(String.valueOf(523)) && bL.contains(String.valueOf(524))) {
-				if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
-					ch.setMissingGems(true);
+			JsonArray bonusy =  item.getJsonArray("bonusLists");
+			if (bonusy != null) {
+				for (JsonValue bonus : bonusy) {
+					int s = Integer.valueOf(bonus.toString());
+					if (sockets.contains(s)) {
+						if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
+							ch.setMissingGems(true);
+						}
+					}
 				}
 			}
+//			if (bL.contains(String.valueOf(523)) || bL.contains(String.valueOf(563))) {
+//				if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
+//					ch.setMissingGems(true);
+//				}
+//			}
 		}
 	}
 

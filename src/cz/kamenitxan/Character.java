@@ -183,13 +183,13 @@ public class Character implements Comparable{
 	}
 
 	public void setSpec(String spec) {
-		if (spec == null) {
+		if (this.spec == null) {
 			this.spec = new Spec();
 		}
 		this.spec.setSpec(spec);
 	}
 	public void setSpec(String spec, boolean active) {
-		if (spec == null) {
+		if (this.spec == null) {
 			this.spec = new Spec();
 		}
 		this.spec.setSpec(spec, active);
@@ -200,13 +200,13 @@ public class Character implements Comparable{
 	}
 
 	public void setAltSpec(String altSpec) {
-		if (altSpec == null) {
+		if (this.altSpec == null) {
 			this.altSpec = new Spec();
 		}
 		this.altSpec.setSpec(altSpec);
 	}
 	public void setAltSpec(String spec, boolean active) {
-		if (altSpec == null) {
+		if (this.altSpec == null) {
 			this.altSpec = new Spec();
 		}
 		this.altSpec.setSpec(spec, active);
