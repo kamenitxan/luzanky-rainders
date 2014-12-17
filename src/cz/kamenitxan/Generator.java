@@ -182,7 +182,7 @@ public class Generator {
 		JsonObject jsonObject = jsonReader.readObject();
 		final int lastModified = jsonObject.getInt("lastModified");
 
-		if (lastModified == character.getLastModified()) {
+		if (lastModified != character.getLastModified()) {
 			//System.out.println(character.getName() + " aktualizovnán");
 			is = null;
 			//System.out.println(character.getLastModified() + " teď: " + lastModified);
@@ -216,7 +216,6 @@ public class Generator {
 
 			final JsonObject guild = jsonObject.getJsonObject("guild");
 			final JsonObject items = jsonObject.getJsonObject("items");
-			final JsonArray titles = jsonObject.getJsonArray("titles");
 			final JsonArray talents = jsonObject.getJsonArray("talents");
 			final JsonArray achievements = jsonObject.getJsonObject("achievements").getJsonArray("achievementsCompleted");
 
@@ -254,12 +253,6 @@ public class Generator {
 			character.setAchievementPoints(jsonObject.getInt("achievementPoints"));
 			character.setAvatar(jsonObject.getString("thumbnail"));
 			character.setGuild(guild.getString("name"));
-			/*for (JsonValue i : titles) {
-				final JsonObject title = (JsonObject) i;
-				if (title.size() == 3) {
-					character.setTitle(title.getString("name"));
-				}
-			}*/
 			character.setPrimaryProf(primary_prof.getString("name"));
 			character.setPrimaryProfLvl(primary_prof.getInt("rank"));
 			character.setSecondaryProf(secondary_prof.getString("name"));
@@ -413,23 +406,14 @@ public class Generator {
 			sockets.add(563);
 			sockets.add(564);
 			sockets.add(565);
-			final String bL = item.getJsonArray("bonusLists").toString();
 			JsonArray bonusy =  item.getJsonArray("bonusLists");
 			if (bonusy != null) {
-				for (JsonValue bonus : bonusy) {
-					int s = Integer.valueOf(bonus.toString());
-					if (sockets.contains(s)) {
-						if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
-							ch.setMissingGems(true);
-						}
+				bonusy.stream().filter(bonus -> sockets.contains(Integer.valueOf(bonus.toString()))).forEach(bonus -> {
+					if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
+						ch.setMissingGems(true);
 					}
-				}
+				});
 			}
-//			if (bL.contains(String.valueOf(523)) || bL.contains(String.valueOf(563))) {
-//				if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
-//					ch.setMissingGems(true);
-//				}
-//			}
 		}
 	}
 
