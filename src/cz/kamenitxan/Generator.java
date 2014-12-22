@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("HardcodedFileSeparator")
 public class Generator {
@@ -82,7 +83,11 @@ public class Generator {
 		while (is == null) {
 			try {
 				final URL url = new URL(host + "wow/guild/" + realm + "/" + guildName + "?fields=members");
-				is = url.openStream();
+				final HttpURLConnection con = (HttpURLConnection) url.openConnection();
+				con.setRequestProperty("Accept-Encoding", "gzip, deflate");
+				con.setReadTimeout(1500); //1,5 vteřiny
+
+				is = new GZIPInputStream(con.getInputStream());
 			} catch (FileNotFoundException ex) {
 				System.out.println(ex.getLocalizedMessage());
 				System.out.println(ex.getMessage());
@@ -157,9 +162,10 @@ public class Generator {
 				final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName());
 				// System.out.println(url.toString());
 				final HttpURLConnection con = (HttpURLConnection) url.openConnection();
+				con.setRequestProperty("Accept-Encoding", "gzip, deflate");
 				con.setReadTimeout(1500); //1,5 vteřiny
 
-				is = con.getInputStream();
+				is = new GZIPInputStream(con.getInputStream());
 			} catch (FileNotFoundException ex) {
 				final String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
 				System.out.println(error);
@@ -181,7 +187,6 @@ public class Generator {
 		JsonReader jsonReader = Json.createReader(is);
 		JsonObject jsonObject = jsonReader.readObject();
 		final int lastModified = jsonObject.getInt("lastModified");
-
 		if (lastModified != character.getLastModified()) {
 			//System.out.println(character.getName() + " aktualizovnán");
 			is = null;
@@ -195,9 +200,10 @@ public class Generator {
 							"?fields=guild,items,titles,talents,professions,achievements");
 					// System.out.println(url.toString());
 					final HttpURLConnection con = (HttpURLConnection) url.openConnection();
+					con.setRequestProperty("Accept-Encoding", "gzip, deflate");
 					con.setReadTimeout(1500); //1,5 vteřiny
 
-					is = con.getInputStream();
+					is = new GZIPInputStream(con.getInputStream());
 				} catch (IOException ex) {
 					final String error = ex.getLocalizedMessage();
 					System.out.println("IOEX " + character.getName() + ": " + error);
