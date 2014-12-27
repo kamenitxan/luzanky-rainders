@@ -47,6 +47,9 @@ public class Generator {
 	private int timeOuts = 0;
 	private int updates = 0;
 
+    /**
+     * Constructor creates database if it's not existing
+     */
 	public Generator() {
 		try {
 			Class.forName("org.sqlite.JDBC");
@@ -66,6 +69,10 @@ public class Generator {
 
 	}
 
+    /**
+     * Start generation of rooster
+     * @param args guild name and realm
+     */
 	public void start(String[] args) {
 		if (args.length != 0) {
 			guildName = args[0];
@@ -76,6 +83,9 @@ public class Generator {
 		generateHTML();
 	}
 
+    /**
+     * Gets all lvl 100 members from API and saves them to DB.
+     */
 	private void queryGuild() {
 		System.out.println("Běh zahájen");
 		InputStream is = null;
@@ -119,6 +129,9 @@ public class Generator {
 		}
 	}
 
+    /**
+     * @param ch character saved to DB
+     */
 	private void addChar(JsonValue ch) {
 		JsonObject jsonCharacter = (JsonObject) ch;
 		final int rank = jsonCharacter.getInt("rank");
@@ -137,6 +150,9 @@ public class Generator {
 		}
 	}
 
+    /**
+     * Manages downloading of characters in threads.
+     */
 	private void getData() {
 		final ExecutorService executor = Executors.newFixedThreadPool(16);
 		for (Character character : dao) {
@@ -154,6 +170,9 @@ public class Generator {
 //		}
 	}
 
+    /**
+     * @param character to be downloaded from API
+     */
 	private void queryAPI(Character character) {
 		InputStream is = null;
 		while (is == null) {
@@ -167,7 +186,7 @@ public class Generator {
 
 				is = new GZIPInputStream(con.getInputStream());
 			} catch (FileNotFoundException ex) {
-				final String error = "Postava " + character.getName() + " na serveru " + character.getRealm() + " nenalezena";
+				final String error = "Postava " + character.getName() + ", " + character.getRealm() + " nenalezena";
 				System.out.println(error);
 				try {
 					dao.delete(character);
@@ -267,7 +286,8 @@ public class Generator {
 			character.setTankChallenge(0);
 			character.setHealChallenge(0);
 			character.setDpsChallenge(0);
-			achievements.stream().filter(a -> Integer.parseInt(a.toString()) > 9570 && Integer.parseInt(a.toString()) < 9590).forEach(a -> {
+			achievements.stream().filter(a -> Integer.parseInt(a.toString()) > 9570
+                                           && Integer.parseInt(a.toString()) < 9590).forEach(a -> {
 				switch (Integer.parseInt(a.toString())) {
 					case 9578: {
 						character.setTankChallenge(1);
@@ -323,6 +343,11 @@ public class Generator {
 		}
 	}
 
+    /**
+     * Checks if character have requested items like gems and enchants
+     * @param items list of equiped items
+     * @param ch checked character
+     */
 	private void processAudit(JsonObject items, Character ch) {
 		final int lowerILV = 630;
 		final int higherIVL = 650;
@@ -404,6 +429,12 @@ public class Generator {
 			e.printStackTrace();
 		}
 	}
+
+    /**
+     * Checks if item contains gem
+     * @param ch checked character
+     * @param item checked item
+     */
 	private void checkGem(Character ch, JsonObject item) {
 		if (item.getJsonArray("bonusLists").size() >= 1) {
 			// 563, 564, 565
@@ -423,6 +454,11 @@ public class Generator {
 		}
 	}
 
+    /**
+     *
+     * @param ch checked character
+     * @return audit results
+     */
 	private String getAudit(Character ch) {
 		String result = "";
 		int count = 0;
@@ -456,9 +492,12 @@ public class Generator {
 		return result;
 	}
 
-
+    /**
+     * Handles generating HTML output
+     */
 	private void generateHTML() {
 		//characters.parallelStream().filter(ch -> ch.getIlvl() > ILVL).forEach(ch -> countRole(ch));
+        // ORMLite does not support streams
 		for (Character ch : dao) {
 			if (ch.getIlvl() > ILVL || ch.getAltIlvl() > ILVL) {
 				countRole(ch);
@@ -473,8 +512,8 @@ public class Generator {
 			html.meta().charset("UTF-8");
 			html.title().text("Raiders of Luzanky").end();
 			html.link().rel("stylesheet").href("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css");
-			html.link().rel("stylesheet").href("img/tablesorter-2.18.3/css/theme.default.css");
-		html.link().rel("stylesheet").href("img/tablesorter-2.18.3/css/theme.dark.css");
+			//html.link().rel("stylesheet").href("img/tablesorter-2.18.3/css/theme.default.css");
+			html.link().rel("stylesheet").href("img/tablesorter-2.18.3/css/theme.dark.css");
 			html.raw("<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js\"></script>");
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.min.js\"></script>");
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.widgets.js\"></script>");
@@ -535,6 +574,10 @@ public class Generator {
 		}
 	}
 
+    /**
+     * @param ch character
+     * @return table row with character
+     */
 	private String createRow(Character ch){
 		String spec = "<img src=\"img/ch";
 		String altSpec = spec;
@@ -583,7 +626,8 @@ public class Generator {
 			altiLvl = t;
 		}
 		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\" ><td>"
-				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName() +"/advanced\">" + ch.getName() + "</a></td>"
+				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName()
+                    +"/advanced\">" + ch.getName() + "</a></td>"
 				+ "<td>" + lists.getPClass(ch.getPlayerClass()) + "</td>"
 				+ "<td>" + spec + "</td>"
 				+ "<td>" + iLvl + "</td>"
@@ -594,6 +638,9 @@ public class Generator {
 				+ "</tr>\n";
 	}
 
+    /**
+     * @return elapsed time of generation
+     */
 	private String getTime(){
 		final DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 		final Date today = Calendar.getInstance().getTime();
@@ -603,6 +650,10 @@ public class Generator {
 		return "Generováno " + reportDate + ". Export trval " + cas + " s";
 	}
 
+    /**
+     * Adds role to role counter for character
+     * @param ch character
+     */
 	private void countRole(Character ch) {
 		if (ch.getSpec() != null){
 			if (Lists.getRole(ch.getSpec().getSpecName()) == 3) {
@@ -614,18 +665,26 @@ public class Generator {
 			}
 		}
 		if (ch.getAltSpec() != null) {
-			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 3 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
+			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 3
+                && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
 				adpss += 1;
 			}
-			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 2 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
+			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 2
+                && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
 				aheals += 1;
 			}
-			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 1 && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
+			if (Lists.getRole(ch.getAltSpec().getSpecName()) == 1
+                && Lists.getRole(ch.getSpec().getSpecName()) != Lists.getRole(ch.getAltSpec().getSpecName())) {
 				atanks += 1;
 			}
 		}
 	}
 
+    /**
+     * Uploads result to server with SSH
+     * @param fileName name of uploaded file
+     * @throws IOException
+     */
 	private void sshUpload(String fileName) throws IOException{
 		final SSHClient ssh = new SSHClient();
 		ssh.loadKnownHosts();

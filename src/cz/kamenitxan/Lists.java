@@ -49,10 +49,19 @@ public class Lists {
 		return classes.get(i).name;
 	}
 
+    /**
+     * Returns class color
+     * @param i class id from api
+     * @return hex color
+     */
 	public String getPClassColor(int i){
 		return classes.get(i).color;
 	}
 
+    /**
+     * @param rank number from api
+     * @return rank of Luzanky guild
+     */
 	public String getRank(int rank) {
 		switch (rank){
 			case 1: return "Officer";
@@ -107,6 +116,10 @@ public class Lists {
 		return 3;
 	}
 
+    /**
+     * @param spec name from API
+     * @return type of role: tank, heal or dps
+     */
 	public String getRoleType(String spec) {
 		final int role = getRole(spec);
 		if (role == 1) {return "tank";}
