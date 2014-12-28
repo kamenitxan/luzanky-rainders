@@ -1,4 +1,4 @@
-package cz.kamenitxan;
+package cz.kamenitxan.raiders;
 
 import com.googlecode.jatl.Html;
 import com.j256.ormlite.dao.Dao;
@@ -6,6 +6,8 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import cz.kamenitxan.raiders.dataHolders.Character;
+import cz.kamenitxan.raiders.dataHolders.Lists;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.xfer.FileSystemFile;
@@ -20,7 +22,6 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
@@ -35,7 +36,7 @@ public class Generator {
 	private String realm = "Thunderhorn";
 	private final int ILVL = 500;
 
-	private Dao<Character, String> dao = null;
+	private Dao<cz.kamenitxan.raiders.dataHolders.Character, String> dao = null;
 
 	private int tanks = 0;
 	private int heals = 0;
@@ -328,7 +329,7 @@ public class Generator {
 				}
 			});
 
-			processAudit(items, character);
+			Audit.processAudit(items, character);
 			//System.out.println(jsonObject.toString());
 
 			if (character.getTitle() == null) {
@@ -343,154 +344,7 @@ public class Generator {
 		}
 	}
 
-    /**
-     * Checks if character have requested items like gems and enchants
-     * @param items list of equiped items
-     * @param ch checked character
-     */
-	private void processAudit(JsonObject items, Character ch) {
-		final int lowerILV = 630;
-		final int higherIVL = 650;
-		ch.setMissingGems(false);
 
-		final JsonObject head = items.getJsonObject("head");
-		if (head.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, head);
-		}
-		final JsonObject neck = items.getJsonObject("neck");
-		if (neck.getInt("itemLevel") >= lowerILV) {
-			if (neck.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setNeckEnch(false);}
-			else {ch.setNeckEnch(true);}
-			checkGem(ch, neck);
-		}
-		final JsonObject shoulder = items.getJsonObject("shoulder");
-		if (shoulder.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, shoulder);
-		}
-		final JsonObject back = items.getJsonObject("back");
-		if (back.getInt("itemLevel") >= lowerILV) {
-			if (back.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setBackEnch(false);}
-			else {ch.setBackEnch(true);}
-			checkGem(ch, back);
-		}
-		final JsonObject chest = items.getJsonObject("chest");
-		if (chest.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, chest);
-		}
-		final JsonObject wrist = items.getJsonObject("wrist");
-		if (wrist.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, wrist);
-		}
-		final JsonObject hands = items.getJsonObject("hands");
-		if (hands.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, hands);
-		}
-		final JsonObject waist = items.getJsonObject("waist");
-		if (waist.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, waist);
-		}
-		final JsonObject legs = items.getJsonObject("legs");
-		if (legs.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, legs);
-		}
-		final JsonObject feet = items.getJsonObject("feet");
-		if (feet.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, feet);
-		}
-		final JsonObject ring1 = items.getJsonObject("finger1");
-		if (ring1.getInt("itemLevel") >= lowerILV) {
-			if (ring1.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setRing1Ench(false);}
-			else {ch.setRing1Ench(true);}
-			checkGem(ch, ring1);
-		}
-		final JsonObject ring2 = items.getJsonObject("finger2");
-		if (ring2.getInt("itemLevel") >= lowerILV) {
-			if (ring2.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setRing2Ench(false);}
-			else {ch.setRing2Ench(true);}
-			checkGem(ch, ring2);
-		}
-		final JsonObject trinket1 = items.getJsonObject("trinket1");
-		if (trinket1.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, trinket1);
-		}
-		final JsonObject trinket2 = items.getJsonObject("trinket2");
-		if (trinket2.getInt("itemLevel") >= lowerILV) {
-			checkGem(ch, trinket2);
-		}
-		final JsonObject weapon = items.getJsonObject("mainHand");
-		if (weapon.getInt("itemLevel") >= higherIVL) {
-			if (weapon.getJsonObject("tooltipParams").getInt("enchant", 0) == 0) {ch.setWeaponEnch(false);}
-			else {ch.setWeaponEnch(true);}
-			checkGem(ch, weapon);
-		}
-		try {
-			dao.createOrUpdate(ch);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
-    /**
-     * Checks if item contains gem
-     * @param ch checked character
-     * @param item checked item
-     */
-	private void checkGem(Character ch, JsonObject item) {
-		if (item.getJsonArray("bonusLists").size() >= 1) {
-			// 563, 564, 565
-			ArrayList<Integer> sockets = new ArrayList<>();
-			sockets.add(523);
-			sockets.add(563);
-			sockets.add(564);
-			sockets.add(565);
-			JsonArray bonusy =  item.getJsonArray("bonusLists");
-			if (bonusy != null) {
-				bonusy.stream().filter(bonus -> sockets.contains(Integer.valueOf(bonus.toString()))).forEach(bonus -> {
-					if (item.getJsonObject("tooltipParams").getInt("gem0", 0) == 0) {
-						ch.setMissingGems(true);
-					}
-				});
-			}
-		}
-	}
-
-    /**
-     *
-     * @param ch checked character
-     * @return audit results
-     */
-	private String getAudit(Character ch) {
-		String result = "";
-		int count = 0;
-		if (!ch.isBackEnch()) {
-			result += "Back enchant, ";
-			count++;
-		}
-		if (!ch.isNeckEnch()) {
-			result += "Neck enchant, ";
-			count++;
-		}
-		if (!ch.isWeaponEnch()) {
-			result += "Weapon enchant, ";
-			count++;
-		}
-		if (!ch.isRing1Ench()) {
-			result += "Ring1 enchant, ";
-			count++;
-		}
-		if (!ch.isRing2Ench()) {
-			result += "Ring2 enchant, ";
-			count++;
-		}
-		if (ch.getMissingGems() > 0) {
-			result += "Chybí " + ch.getMissingGems() + " gem(y), ";
-			count += ch.getMissingGems();
-		}
-		if (!result.equals("")) {
-			return "<img src=\"img/error.png\" title=\"Chybí: " + result + "\"> " + count;
-		}
-		return result;
-	}
 
     /**
      * Handles generating HTML output
@@ -522,7 +376,8 @@ public class Generator {
 		html.body().style("color: white; background-color: black;");
 			html.h1().text("Seznam raiderů Lužánek").end();
 			html.p().a().href("img/changelog.html").text("Changelog - seznam změn").endAll();
-			html.raw("<table id=\"myTable\" class=\"table table-striped table-condensed tablesorter\" data-sortlist=\"[[3,1]]\"><thead><tr>" +
+			html.raw("<table id=\"myTable\" class=\"table table-striped table-condensed tablesorter\"" +
+                                                        " data-sortlist=\"[[3,1]]\"><thead><tr>" +
 					"<th>Jméno</th>" +
 					"<th>Povolání</th>" +
 					"<th data-placeholder=\"treba heal\">Spec</th>" +
@@ -634,7 +489,7 @@ public class Generator {
 				+ "<td>" + altSpec + "</td>"
 				+ "<td>" + altiLvl + "</td>"
 				+ "<td>" + lists.getRank(ch.getRank()) + "</td>")
-				+ "<td>" + getAudit(ch) + "</td>"
+				+ "<td>" + Audit.getAudit(ch) + "</td>"
 				+ "</tr>\n";
 	}
 
