@@ -128,4 +128,26 @@ public class Lists {
 		return "";
 	}
 
+	/**
+	 * Checks if char is someones alt. Hardcoded for now.
+	 * @param charName name of character
+	 * @return name of main + alt name
+	 */
+	public static String altsMain(String charName) {
+		Map<String, String> alts = new HashMap<String, String>() {{
+			put("Stribrovous", "Reve");
+			put("Fandacz", "Frantacz");
+			put("Werhaf", "Frantacz");
+			put("Turmi", "Turm");
+			put("Chlupatice", "Padouch");
+			put("Horyn", "Homir");
+			put("Padou", "Padouch");
+		}};
+		if (alts.containsKey(charName)) {
+			return alts.get(charName) + " (" + charName + ")";
+		}else {
+			return charName;
+		}
+	}
+
 }

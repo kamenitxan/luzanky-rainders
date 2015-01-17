@@ -156,6 +156,7 @@ public class Generator {
      */
 	private void getData() {
 		final ExecutorService executor = Executors.newFixedThreadPool(16);
+
 		for (Character character : dao) {
 			executor.submit(() -> queryAPI(character));
 		}
@@ -206,7 +207,7 @@ public class Generator {
 		}
 		JsonReader jsonReader = Json.createReader(is);
 		JsonObject jsonObject = jsonReader.readObject();
-		final int lastModified = jsonObject.getInt("lastModified");
+		final long lastModified = jsonObject.getJsonNumber("lastModified").longValue();
 		if (lastModified != character.getLastModified()) {
 			//System.out.println(character.getName() + " aktualizovnán");
 			is = null;
@@ -302,6 +303,10 @@ public class Generator {
 						character.setTankChallenge(3);
 						break;
 					}
+					case 9581: {
+						character.setTankChallenge(4);
+						break;
+					}
 					case 9584: {
 						character.setHealChallenge(1);
 						break;
@@ -314,6 +319,9 @@ public class Generator {
 						character.setHealChallenge(3);
 						break;
 					}
+					case 9587: {
+						character.setHealChallenge(4);
+					}
 					case 9572: {
 						character.setDpsChallenge(1);
 						break;
@@ -325,6 +333,9 @@ public class Generator {
 					case 9574: {
 						character.setDpsChallenge(3);
 						break;
+					}
+					case 9575: {
+						character.setDpsChallenge(4);
 					}
 				}
 			});
@@ -381,7 +392,7 @@ public class Generator {
 					"<th>Jméno</th>" +
 					"<th>Povolání</th>" +
 					"<th data-placeholder=\"treba heal\">Spec</th>" +
-					"<th data-value=\">615\">iLVL</th>" +
+					"<th data-value=\">630\">iLVL</th>" +
 					"<th>Off-Spec</th>" +
 					"<th>Off-Spec iLVL</th>" +
 					"<th>Rank</th>" +
@@ -407,11 +418,13 @@ public class Generator {
 		html.p().text(getTime()).end();
 		html.p().text("Timeouts: " + timeOuts + " Postav aktualizováno: " + updates).end();
 		html.script().raw("$(function(){" +
-				"		$(\"#myTable\").tablesorter(" +
-									"{theme: 'dark', widgets: [\"zebra\", \"filter\"],}" +
-									");" +
-					 		  "});").end();
-			html.endAll();
+							"$('.tablesorter-childRow td').hide();" +
+							"$(\"#myTable\").tablesorter(" +
+								"{theme: 'dark', widgets: [\"zebra\", \"filter\"], cssChildRow: \"tablesorter-childRow\",}" +
+							");\n" +
+							"$('.tablesorter').delegate('.toggle', 'click' ,function(){$(this).closest('tr').nextUntil('tr.tablesorter-hasChildRow').find('td').toggle(); return false;});\n" +
+				          "});").end();
+		html.endAll();
 
 		final String result = sw.getBuffer().toString();
 		try {
@@ -480,17 +493,24 @@ public class Generator {
 			iLvl = altiLvl;
 			altiLvl = t;
 		}
-		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\" ><td>"
+
+		// childrow
+		String childRow = "<tr class=\"tablesorter-childRow\"><td colspan=\"8\">";
+		SimpleDateFormat df = new SimpleDateFormat("hh:mm dd.MM.yy");
+		childRow += "Poslední aktualizace: " + df.format(new Date(ch.getLastModified()));
+		childRow += "</td>";
+		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\"><td>"
 				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName()
-                    +"/advanced\">" + ch.getName() + "</a></td>"
-				+ "<td>" + lists.getPClass(ch.getPlayerClass()) + "</td>"
+                    +"/advanced\">" + Lists.altsMain(ch.getName()) + "</a></td>"
+				+ "<td>" + lists.getPClass(ch.getPlayerClass()) + "</a></td>"
 				+ "<td>" + spec + "</td>"
 				+ "<td>" + iLvl + "</td>"
 				+ "<td>" + altSpec + "</td>"
 				+ "<td>" + altiLvl + "</td>"
 				+ "<td>" + lists.getRank(ch.getRank()) + "</td>")
-				+ "<td>" + Audit.getAudit(ch) + "</td>"
-				+ "</tr>\n";
+				+ "<td>" + "<a href=\"#\"class=\"toggle\"><img src=\"img/info.png\"></a>" + Audit.getAudit(ch) + "</td>"
+				+ "</tr>\n" +
+				childRow;
 	}
 
     /**

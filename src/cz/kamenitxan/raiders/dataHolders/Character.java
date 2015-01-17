@@ -59,7 +59,7 @@ public class Character implements Comparable{
 	@DatabaseField
 	private int healChallenge = 0;
 	@DatabaseField
-	private int lastModified = 0;
+	private long lastModified = 0;
 
 	public Character() {}
 
@@ -199,6 +199,7 @@ public class Character implements Comparable{
 		return altSpec;
 	}
 
+	@Deprecated
 	public void setAltSpec(String altSpec) {
 		if (this.altSpec == null) {
 			this.altSpec = new Spec();
@@ -296,24 +297,12 @@ public class Character implements Comparable{
 		}
 	}
 
-	public int getDpsChallenge() {
-		return dpsChallenge;
-	}
-
 	public void setDpsChallenge(int dpsChallenge) {
 		this.dpsChallenge = dpsChallenge;
 	}
 
-	public int getTankChallenge() {
-		return tankChallenge;
-	}
-
 	public void setTankChallenge(int tankChallenge) {
 		this.tankChallenge = tankChallenge;
-	}
-
-	public int getHealChallenge() {
-		return healChallenge;
 	}
 
 	public void setHealChallenge(int healChallenge) {
@@ -343,11 +332,11 @@ public class Character implements Comparable{
 		return 0;
 	}
 
-	public int getLastModified() {
+	public long getLastModified() {
 		return lastModified;
 	}
 
-	public void setLastModified(int lastModified) {
+	public void setLastModified(long lastModified) {
 		this.lastModified = lastModified;
 	}
 
