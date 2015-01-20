@@ -8,6 +8,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import cz.kamenitxan.raiders.dataHolders.Character;
 import cz.kamenitxan.raiders.dataHolders.Lists;
+import cz.kamenitxan.raiders.dataHolders.Raid;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.xfer.FileSystemFile;
@@ -208,7 +209,7 @@ public class Generator {
 		JsonReader jsonReader = Json.createReader(is);
 		JsonObject jsonObject = jsonReader.readObject();
 		final long lastModified = jsonObject.getJsonNumber("lastModified").longValue();
-		if (lastModified != character.getLastModified()) {
+		if (lastModified == character.getLastModified()) {
 			//System.out.println(character.getName() + " aktualizovnán");
 			is = null;
 			//System.out.println(character.getLastModified() + " teď: " + lastModified);
@@ -218,7 +219,7 @@ public class Generator {
 				try {
 					final String host = "http://eu.battle.net/api/";
 					final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" + character.getName() +
-							"?fields=guild,items,titles,talents,professions,achievements");
+							"?fields=guild,items,titles,talents,professions,achievements,progression");
 					// System.out.println(url.toString());
 					final HttpURLConnection con = (HttpURLConnection) url.openConnection();
 					con.setRequestProperty("Accept-Encoding", "gzip, deflate");
@@ -339,6 +340,8 @@ public class Generator {
 					}
 				}
 			});
+			JsonArray raids = jsonObject.getJsonObject("progression").getJsonArray("raids");
+			setRaidProgress(character, raids);
 
 			Audit.processAudit(items, character);
 			//System.out.println(jsonObject.toString());
@@ -346,16 +349,50 @@ public class Generator {
 			if (character.getTitle() == null) {
 				character.setTitle("");
 			}
-
 			try {
-				dao.update(character);
+				if (!character.getGuild().equals(guildName)) {
+					dao.deleteById(character.getName());
+					System.out.println("Smazána postava " + character.getName());
+				} else {
+					dao.update(character);
+				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-
+	/**
+	 * Gets raid progresion info
+	 */
+	private void setRaidProgress(Character ch, JsonArray raids) {
+		if (ch.getName().equals("Yagwin")) {
+			System.out.println("yag");
+		}
+		for (int i = 32; i <= 32; i++) {
+			JsonObject raid = raids.getJsonObject(i);
+			JsonArray bosses = raid.getJsonArray("bosses");
+			int lfr = 0;
+			int normal = 0;
+			int heroic = 0;
+			int mythic = 0;
+			for (JsonValue boss : bosses) {
+				if (((JsonObject) boss).getInt("lfrKills") > 0) {
+					lfr++;
+				}
+				if (((JsonObject) boss).getInt("normalKills") > 0) {
+					normal++;
+				}
+				if (((JsonObject) boss).getInt("heroicKills") > 0) {
+					heroic++;
+				}
+				if (((JsonObject) boss).getInt("mythicKills") > 0) {
+					mythic++;
+				}
+			}
+			ch.setRaidProgress(i, lfr, normal, heroic, mythic);
+		}
+	}
 
     /**
      * Handles generating HTML output
@@ -494,11 +531,20 @@ public class Generator {
 			altiLvl = t;
 		}
 
-		// childrow
-		String childRow = "<tr class=\"tablesorter-childRow\"><td colspan=\"8\">";
+		// childrow - šířka 8(2,6)
+		Raid hmR = ch.getRaidProgress().getRaid(32);
+
+		String childRow = "<tr class=\"tablesorter-childRow\"><td colspan=\"2\">";
 		SimpleDateFormat df = new SimpleDateFormat("hh:mm dd.MM.yy");
 		childRow += "Poslední aktualizace: " + df.format(new Date(ch.getLastModified()));
 		childRow += "</td>";
+		childRow += "<td colspan=\"6\">Progres Highmaul: " + hmR.lfrKills + ","
+				 										   + hmR.normalKills + ","
+														   + hmR.heroicKills + ","
+														   + hmR.mythicKills + "/7"
+				+ "</td>";
+
+
 		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\"><td>"
 				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName()
                     +"/advanced\">" + Lists.altsMain(ch.getName()) + "</a></td>"

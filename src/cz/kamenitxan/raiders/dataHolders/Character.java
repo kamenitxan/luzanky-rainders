@@ -4,6 +4,8 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.util.List;
+
 @DatabaseTable
 public class Character implements Comparable{
 	@DatabaseField(id = true)
@@ -60,6 +62,8 @@ public class Character implements Comparable{
 	private int healChallenge = 0;
 	@DatabaseField
 	private long lastModified = 0;
+	@DatabaseField(dataType = DataType.SERIALIZABLE)
+	private Progress raidProgress = null;
 
 	public Character() {}
 
@@ -338,6 +342,17 @@ public class Character implements Comparable{
 
 	public void setLastModified(long lastModified) {
 		this.lastModified = lastModified;
+	}
+
+	public Progress getRaidProgress() {
+		return raidProgress;
+	}
+
+	public void setRaidProgress(int id, int lfr, int normal, int heroic, int mythic) {
+		if (raidProgress == null) {
+			raidProgress = new Progress();
+		}
+		raidProgress.setRaidProgress(id, lfr, normal, heroic, mythic);
 	}
 
 	@Override
