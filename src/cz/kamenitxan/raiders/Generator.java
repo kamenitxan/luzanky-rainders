@@ -89,6 +89,7 @@ public class Generator {
      * Gets all lvl 100 members from API and saves them to DB.
      */
 	private void queryGuild() {
+		// BUG: nějak implementovat merged realms. Smrtacka je z wildhameru
 		System.out.println("Běh zahájen");
 		InputStream is = null;
 		final String host = "http://eu.battle.net/api/";
@@ -209,7 +210,7 @@ public class Generator {
 		JsonReader jsonReader = Json.createReader(is);
 		JsonObject jsonObject = jsonReader.readObject();
 		final long lastModified = jsonObject.getJsonNumber("lastModified").longValue();
-		if (lastModified == character.getLastModified()) {
+		if (lastModified != character.getLastModified()) {
 			//System.out.println(character.getName() + " aktualizovnán");
 			is = null;
 			//System.out.println(character.getLastModified() + " teď: " + lastModified);
@@ -266,9 +267,14 @@ public class Generator {
 				character.setAltSpec(specs, false);
 			}
 
-			final JsonObject professions = jsonObject.getJsonObject("professions");
-			final JsonObject primary_prof = professions.getJsonArray("primary").getJsonObject(0);
-			final JsonObject secondary_prof = professions.getJsonArray("primary").getJsonObject(1);
+			final JsonArray professions = jsonObject.getJsonObject("professions").getJsonArray("primary");
+			JsonObject primary_prof = null;
+			JsonObject secondary_prof = null;
+			if (professions.size() > 0) {
+				primary_prof = professions.getJsonObject(0);
+				secondary_prof = professions.getJsonObject(1);
+			}
+
 
 
 			jsonReader.close();
@@ -281,10 +287,14 @@ public class Generator {
 			character.setAchievementPoints(jsonObject.getInt("achievementPoints"));
 			character.setAvatar(jsonObject.getString("thumbnail"));
 			character.setGuild(guild.getString("name"));
-			character.setPrimaryProf(primary_prof.getString("name"));
-			character.setPrimaryProfLvl(primary_prof.getInt("rank"));
-			character.setSecondaryProf(secondary_prof.getString("name"));
-			character.setSecondaryProfLvl(secondary_prof.getInt("rank"));
+			if (primary_prof != null) {
+				character.setPrimaryProf(primary_prof.getString("name"));
+				character.setPrimaryProfLvl(primary_prof.getInt("rank"));
+			}
+			if (secondary_prof != null) {
+				character.setSecondaryProf(secondary_prof.getString("name"));
+				character.setSecondaryProfLvl(secondary_prof.getInt("rank"));
+			}
 
 			character.setTankChallenge(0);
 			character.setHealChallenge(0);
@@ -366,9 +376,6 @@ public class Generator {
 	 * Gets raid progresion info
 	 */
 	private void setRaidProgress(Character ch, JsonArray raids) {
-		if (ch.getName().equals("Yagwin")) {
-			System.out.println("yag");
-		}
 		for (int i = 32; i <= 32; i++) {
 			JsonObject raid = raids.getJsonObject(i);
 			JsonArray bosses = raid.getJsonArray("bosses");
