@@ -36,6 +36,7 @@ public class Generator {
 	private String guildName = "Luzanky";
 	private String realm = "Thunderhorn";
 	private final int ILVL = 500;
+	private boolean forceUpdate = false;
 
 	private Dao<cz.kamenitxan.raiders.dataHolders.Character, String> dao = null;
 
@@ -79,6 +80,9 @@ public class Generator {
 		if (args.length != 0) {
 			guildName = args[0];
 			realm = args[1];
+			if (args[2].equals("force")) {
+				forceUpdate = true;
+			}
 		}
 		queryGuild();
 		getData();
@@ -210,7 +214,7 @@ public class Generator {
 		JsonReader jsonReader = Json.createReader(is);
 		JsonObject jsonObject = jsonReader.readObject();
 		final long lastModified = jsonObject.getJsonNumber("lastModified").longValue();
-		if (lastModified != character.getLastModified()) {
+		if (lastModified != character.getLastModified() || forceUpdate) {
 			//System.out.println(character.getName() + " aktualizovnán");
 			is = null;
 			//System.out.println(character.getLastModified() + " teď: " + lastModified);
@@ -376,7 +380,8 @@ public class Generator {
 	 * Gets raid progresion info
 	 */
 	private void setRaidProgress(Character ch, JsonArray raids) {
-		for (int i = 32; i <= 32; i++) {
+		ch.nullRaidProgress();
+		for (int i = 32; i <= 33; i++) {
 			JsonObject raid = raids.getJsonObject(i);
 			JsonArray bosses = raid.getJsonArray("bosses");
 			int lfr = 0;
@@ -538,17 +543,23 @@ public class Generator {
 			altiLvl = t;
 		}
 
-		// childrow - šířka 8(2,6)
+		// childrow - šířka 8(2,2,4)
 		Raid hmR = ch.getRaidProgress().getRaid(32);
+		Raid brR = ch.getRaidProgress().getRaid(33);
 
 		String childRow = "<tr class=\"tablesorter-childRow\"><td colspan=\"2\">";
 		SimpleDateFormat df = new SimpleDateFormat("hh:mm dd.MM.yy");
 		childRow += "Poslední aktualizace: " + df.format(new Date(ch.getLastModified()));
 		childRow += "</td>";
-		childRow += "<td colspan=\"6\">Progres Highmaul: " + hmR.lfrKills + ","
+		childRow += "<td colspan=\"2\">Progres Highmaul: " + hmR.lfrKills + ","
 				 										   + hmR.normalKills + ","
 														   + hmR.heroicKills + ","
 														   + hmR.mythicKills + "/7"
+				+ "</td>";
+		childRow += "<td colspan=\"4\">Progres BRF: " + brR.lfrKills + ","
+				+ brR.normalKills + ","
+				+ brR.heroicKills + ","
+				+ brR.mythicKills + "/7"
 				+ "</td>";
 
 

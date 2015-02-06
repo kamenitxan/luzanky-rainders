@@ -16,6 +16,9 @@ public class Progress implements Serializable{
 		raids.put(32, new Raid() {{
 			id = 32;
 		}});
+		raids.put(33, new Raid() {{
+			id = 33;
+		}});
 	}
 
 	public Raid getRaid(int raid) {

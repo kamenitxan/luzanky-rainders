@@ -348,6 +348,10 @@ public class Character implements Comparable{
 		return raidProgress;
 	}
 
+	public void nullRaidProgress() {
+		raidProgress = null;
+	}
+
 	public void setRaidProgress(int id, int lfr, int normal, int heroic, int mythic) {
 		if (raidProgress == null) {
 			raidProgress = new Progress();
