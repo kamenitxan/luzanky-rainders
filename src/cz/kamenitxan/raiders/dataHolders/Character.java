@@ -370,11 +370,11 @@ public class Character implements Comparable{
 		return attendanceHistory.getHistory();
 	}
 
-	public void setAttendanceHistory() {
+	public void setAttendanceHistory(boolean attended) {
 		if (attendanceHistory == null) {
 			attendanceHistory = new AttendanceHistory();
 		}
-		attendanceHistory.addAttendace();
+		attendanceHistory.addAttendace(attended);
 	}
 
 	@Override

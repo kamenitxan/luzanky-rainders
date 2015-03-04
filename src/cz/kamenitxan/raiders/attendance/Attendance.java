@@ -56,9 +56,18 @@ public class Attendance {
 	private void processMembers(String html) throws SQLException {
 		Document doc = Jsoup.parse(html);
 		Elements attended = doc.select(".composition-entry a");
-		for (Element a : attended) {
-			Character ch = dao.queryForId(a.text());
-			ch.setAttendanceHistory();
+		for (Character ch : dao) {
+			boolean done = false;
+			for (Element a : attended) {
+				if (ch.getName().equals(a.text())) {
+					ch.setAttendanceHistory(true);
+					done = true;
+					break;
+				}
+			}
+			if (!done) {
+				ch.setAttendanceHistory(false);
+			}
 			dao.update(ch);
 		}
 	}
