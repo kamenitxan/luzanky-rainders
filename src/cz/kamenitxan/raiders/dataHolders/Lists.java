@@ -142,6 +142,17 @@ public class Lists {
 			put("Chlupatice", "Padouch");
 			put("Horyn", "Homir");
 			put("Padou", "Padouch");
+			put("Dredgart", "Yagwin");
+			put("Misantrop", "Mellber");
+			put("Huntraz", "Raznikcz");
+			put("Asparuch", "Rozverná");
+			put("Amfitríta", "Mellber");
+			put("Silmë", "Icesky");
+			put("Alasseon","Mellber");
+			put("Metalmell","Mellber");
+			put("Yagwinna","Yagwin");
+			put("Alfar","Nysse");
+			put("Pierette","Clairette");
 		}};
 		if (alts.containsKey(charName)) {
 			return alts.get(charName) + " (" + charName + ")";

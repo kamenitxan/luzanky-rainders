@@ -1,5 +1,7 @@
 package cz.kamenitxan.raiders;
 
+import cz.kamenitxan.raiders.attendance.Attendance;
+
 public class Main {
     public static final double startTime = System.nanoTime();
 
@@ -8,6 +10,15 @@ public class Main {
      * @param args name of guild and server
      */
     public static void main(String[] args) {
-        new Generator().start(args);
+		if (args.length > 0) {
+			if (args[0].contains("attend")) {
+				new Attendance().parseInput();
+			} else {
+				new Generator().start(args);
+			}
+		} else {
+			new Generator().start(args);
+		}
+
     }
 }

@@ -432,7 +432,9 @@ public class Generator {
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.min.js\"></script>");
 			html.raw("<script src=\"img/tablesorter-2.18.3/js/jquery.tablesorter.widgets.js\"></script>");
 			html.style().raw(".table-striped>tbody>tr:nth-child(odd) {background-color: rgb(28, 28, 28) !important;}" +
-							 ".table {width: auto;} .role {display: none;} td a {color: inherit}").end();
+							 ".table {width: auto;} .role {display: none;} td a {color: inherit}" +
+							 ".ano {width: 10px; height: 10px; background-color: green; display: inline-block;} " +
+					 	 	 ".ne {width: 10px; height: 10px; background-color: red; display: inline-block;}").end();
 		html.body().style("color: white; background-color: black;");
 			html.h1().text("Seznam raiderů Lužánek").end();
 			html.p().a().href("img/changelog.html").text("Changelog - seznam změn").endAll();
@@ -543,9 +545,18 @@ public class Generator {
 			altiLvl = t;
 		}
 
-		// childrow - šířka 8(2,2,4)
+		// childrow - šířka 8(2,2,2)
 		Raid hmR = ch.getRaidProgress().getRaid(32);
 		Raid brR = ch.getRaidProgress().getRaid(33);
+
+		String attendance = "";
+		for (Boolean attended : ch.getAttendanceHistory()) {
+			if (attended) {
+				attendance += "<div class=\"ano\"></div>";
+			} else {
+				attendance += "<div class=\"ne\"></div>";
+			}
+		}
 
 		String childRow = "<tr class=\"tablesorter-childRow\"><td colspan=\"2\">";
 		SimpleDateFormat df = new SimpleDateFormat("hh:mm dd.MM.yy");
@@ -556,16 +567,17 @@ public class Generator {
 														   + hmR.heroicKills + ","
 														   + hmR.mythicKills + "/7"
 				+ "</td>";
-		childRow += "<td colspan=\"4\">Progres BRF: " + brR.lfrKills + ","
+		childRow += "<td colspan=\"2\">Progres BRF: " + brR.lfrKills + ","
 				+ brR.normalKills + ","
 				+ brR.heroicKills + ","
 				+ brR.mythicKills + "/7"
 				+ "</td>";
+		childRow += "<td colspan=\"2\">" + attendance + "</td>";
 
 
 		return ("<tr style=\"color: " + lists.getPClassColor(ch.getPlayerClass()) + "\"><td>"
 				+ "<a href=\"http://eu.battle.net/wow/en/character/" + ch.getRealm() + "/" + ch.getName()
-                    +"/advanced\">" + Lists.altsMain(ch.getName()) + "</a></td>"
+                    +"/advanced\" target=\"_blank\">" + Lists.altsMain(ch.getName()) + "</a></td>"
 				+ "<td>" + lists.getPClass(ch.getPlayerClass()) + "</a></td>"
 				+ "<td>" + spec + "</td>"
 				+ "<td>" + iLvl + "</td>"

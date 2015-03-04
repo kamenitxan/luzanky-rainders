@@ -3,7 +3,9 @@ package cz.kamenitxan.raiders.dataHolders;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import cz.kamenitxan.raiders.attendance.AttendanceHistory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @DatabaseTable
@@ -64,6 +66,8 @@ public class Character implements Comparable{
 	private long lastModified = 0;
 	@DatabaseField(dataType = DataType.SERIALIZABLE)
 	private Progress raidProgress = null;
+	@DatabaseField(dataType = DataType.SERIALIZABLE)
+	private AttendanceHistory attendanceHistory = null;
 
 	public Character() {}
 
@@ -357,6 +361,20 @@ public class Character implements Comparable{
 			raidProgress = new Progress();
 		}
 		raidProgress.setRaidProgress(id, lfr, normal, heroic, mythic);
+	}
+
+	public ArrayList<Boolean> getAttendanceHistory() {
+		if (attendanceHistory == null) {
+			attendanceHistory = new AttendanceHistory();
+		}
+		return attendanceHistory.getHistory();
+	}
+
+	public void setAttendanceHistory() {
+		if (attendanceHistory == null) {
+			attendanceHistory = new AttendanceHistory();
+		}
+		attendanceHistory.addAttendace();
 	}
 
 	@Override
