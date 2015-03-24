@@ -62,6 +62,7 @@ public class Attendance {
 				if (ch.getName().equals(a.text())) {
 					ch.setAttendanceHistory(true);
 					done = true;
+					System.out.println(ch.getName());
 					break;
 				}
 			}

@@ -584,7 +584,8 @@ public class Generator {
 				+ "<td>" + altSpec + "</td>"
 				+ "<td>" + altiLvl + "</td>"
 				+ "<td>" + lists.getRank(ch.getRank()) + "</td>")
-				+ "<td>" + "<a href=\"#\"class=\"toggle\"><img src=\"img/info.png\"></a>" + Audit.getAudit(ch) + "</td>"
+				+ "<td>" + "<a href=\"#\"class=\"toggle\"><img src=\"img/info.png\"></a>" + Audit.getAudit(ch)
+				+ "<span class=\"role\">" + ch.getActiveStatus() + "</span></td>"
 				+ "</tr>\n" +
 				childRow;
 	}

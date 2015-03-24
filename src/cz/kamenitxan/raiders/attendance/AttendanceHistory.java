@@ -25,4 +25,23 @@ public class AttendanceHistory implements Serializable {
 	public ArrayList<Boolean> getHistory() {
 		return history;
 	}
+
+	public String getActiveStatus() {
+		int attends = 0;
+		for (boolean raid : history) {
+			if (raid) {
+				attends++;
+			}
+		}
+		if (attends == 0) {
+			return "neakt";
+		}
+		if (attends > 7) {
+			return "aktivní";
+		}
+		if (attends > 0) {
+			return "poloaktiv";
+		}
+		return "";
+	}
 }

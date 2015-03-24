@@ -6,7 +6,6 @@ import com.j256.ormlite.table.DatabaseTable;
 import cz.kamenitxan.raiders.attendance.AttendanceHistory;
 
 import java.util.ArrayList;
-import java.util.List;
 
 @DatabaseTable
 public class Character implements Comparable{
@@ -119,6 +118,8 @@ public class Character implements Comparable{
 		this.avatar = avatar;
 	}
 
+	// FIX: chybí set rank
+
 	public int getRank() {
 		return rank;
 	}
@@ -207,13 +208,6 @@ public class Character implements Comparable{
 		return altSpec;
 	}
 
-	@Deprecated
-	public void setAltSpec(String altSpec) {
-		if (this.altSpec == null) {
-			this.altSpec = new Spec();
-		}
-		this.altSpec.setSpec(altSpec);
-	}
 	public void setAltSpec(String spec, boolean active) {
 		if (this.altSpec == null) {
 			this.altSpec = new Spec();
@@ -377,6 +371,10 @@ public class Character implements Comparable{
 		attendanceHistory.addAttendace(attended);
 	}
 
+	public String getActiveStatus() {
+		return attendanceHistory.getActiveStatus();
+	}
+
 	@Override
 	public int compareTo(Object o) {
 		if (spec.getIlvl() < ((Character) o).getIlvl() ){
@@ -389,6 +387,5 @@ public class Character implements Comparable{
 		}
 
 	}
-
 
 }

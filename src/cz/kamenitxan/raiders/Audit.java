@@ -89,11 +89,6 @@ public class Audit {
             else {ch.setWeaponEnch(true);}
             checkGem(ch, weapon);
         }
-//        try {
-//            dao.createOrUpdate(ch);
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
     }
 
     /**
