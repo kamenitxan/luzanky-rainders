@@ -112,6 +112,7 @@ public class Generator {
 				System.out.println(error);
 			} catch (IOException ex) {
 				System.out.println(ex.getLocalizedMessage());
+				System.exit(1);
 			}
 		}
 		JsonReader jsonReader;
