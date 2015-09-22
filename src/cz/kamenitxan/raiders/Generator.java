@@ -33,8 +33,8 @@ import java.util.zip.GZIPInputStream;
 @SuppressWarnings("HardcodedFileSeparator")
 public class Generator {
 	private final Lists lists = Lists.getInstance();
-	private String guildName = "Luzanky";
-	private String realm = "Thunderhorn";
+	public static String guildName = "Luzanky";
+	public static String realm = "Thunderhorn";
 	private final int ILVL = 500;
 	private boolean forceUpdate = false;
 
@@ -356,6 +356,7 @@ public class Generator {
 				}
 			});
 			JsonArray raids = jsonObject.getJsonObject("progression").getJsonArray("raids");
+			System.out.println(character.getName());
 			setRaidProgress(character, raids);
 
 			Audit.processAudit(items, character);
@@ -382,7 +383,7 @@ public class Generator {
 	 */
 	private void setRaidProgress(Character ch, JsonArray raids) {
 		ch.nullRaidProgress();
-		for (int i = 32; i <= 33; i++) {
+		for (int i = 32; i <= 34; i++) {
 			JsonObject raid = raids.getJsonObject(i);
 			JsonArray bosses = raid.getJsonArray("bosses");
 			int lfr = 0;
@@ -549,6 +550,7 @@ public class Generator {
 		// childrow - šířka 8(2,2,2)
 		Raid hmR = ch.getRaidProgress().getRaid(32);
 		Raid brR = ch.getRaidProgress().getRaid(33);
+		Raid hfc = ch.getRaidProgress().getRaid(34);
 
 		String attendance = "";
 		for (Boolean attended : ch.getAttendanceHistory()) {
@@ -563,16 +565,20 @@ public class Generator {
 		SimpleDateFormat df = new SimpleDateFormat("hh:mm dd.MM.yy");
 		childRow += "Poslední aktualizace: " + df.format(new Date(ch.getLastModified()));
 		childRow += "</td>";
-		childRow += "<td colspan=\"2\">Progres Highmaul: " + hmR.lfrKills + ","
-				 										   + hmR.normalKills + ","
-														   + hmR.heroicKills + ","
-														   + hmR.mythicKills + "/7"
-				+ "</td>";
+
 		childRow += "<td colspan=\"2\">Progres BRF: " + brR.lfrKills + ","
 				+ brR.normalKills + ","
 				+ brR.heroicKills + ","
 				+ brR.mythicKills + "/7"
 				+ "</td>";
+		if (hfc != null) {
+			childRow += "<td colspan=\"2\">Progres HFC: " + hfc.lfrKills + ","
+					+ hfc.normalKills + ","
+					+ hfc.heroicKills + ","
+					+ hfc.mythicKills + "/13"
+					+ "</td>";
+		}
+
 		childRow += "<td colspan=\"2\">" + attendance + "</td>";
 
 
