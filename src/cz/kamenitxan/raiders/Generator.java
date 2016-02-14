@@ -96,10 +96,10 @@ public class Generator {
 		// BUG: nějak implementovat merged realms. Smrtacka je z wildhameru
 		System.out.println("Běh zahájen");
 		InputStream is = null;
-		final String host = "http://eu.battle.net/api/";
+		final String host = "https://eu.api.battle.net/";
 		while (is == null) {
 			try {
-				final URL url = new URL(host + "wow/guild/" + realm + "/" + guildName + "?fields=members");
+				final URL url = new URL(host + "wow/guild/" + realm + "/" + guildName + "?fields=members&locale=en_GB&apikey=" + Main.apiKey);
 				final HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setRequestProperty("Accept-Encoding", "gzip, deflate");
 				con.setReadTimeout(1500); //1,5 vteřiny
@@ -186,8 +186,9 @@ public class Generator {
 		InputStream is = null;
 		while (is == null) {
 			try{
-				final String host = "http://eu.battle.net/api/";
-				final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName());
+				// TODO: new api
+				final String host = "https://eu.api.battle.net/";
+				final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" +  character.getName() + "?locale=en_GB&apikey=" + Main.apiKey);
 				// System.out.println(url.toString());
 				final HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setRequestProperty("Accept-Encoding", "gzip, deflate");
@@ -223,9 +224,10 @@ public class Generator {
 			updates++;
 			while (is == null) {
 				try {
-					final String host = "http://eu.battle.net/api/";
+					// TODO: new api
+					final String host = "https://eu.api.battle.net/";
 					final URL url = new URL(host + "wow/character/" + character.getRealm() + "/" + character.getName() +
-							"?fields=guild,items,titles,talents,professions,achievements,progression");
+							"?fields=guild,items,titles,talents,professions,achievements,progression&locale=en_GB&apikey=" + Main.apiKey);
 					// System.out.println(url.toString());
 					final HttpURLConnection con = (HttpURLConnection) url.openConnection();
 					con.setRequestProperty("Accept-Encoding", "gzip, deflate");
@@ -488,10 +490,12 @@ public class Generator {
 
 		System.out.println("HTML vygenerováno");
 
-		try {
-			sshUpload("raiders.html");
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (Main.sshUpload) {
+			try {
+				sshUpload("raiders.html");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

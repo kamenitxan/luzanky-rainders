@@ -6,8 +6,9 @@ queried.
 
 Example: http://kamenitxan.eu/share/raiders.html
 
-It is possible to specify any EU guild via cmd parameters: "java -jar Luzanky Thunderhorn".
+It is possible to specify any EU guild via cmd parameters: "java -jar Luzanky Thunderhorn -apiKey=yourapikey".
 With "Luzanky Thunderhorn force" characters will be force updated regardless their last update status.
+You can get API key here: https://dev.battle.net/
 
 Queries and HTML generator is in Generator class. Audit class checks if character passes raid requirments. dataHolders
 package contains support classes with data.
