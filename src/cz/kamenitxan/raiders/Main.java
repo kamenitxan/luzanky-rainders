@@ -6,6 +6,7 @@ public class Main {
     public static final double startTime = System.nanoTime();
 	public static boolean sshUpload = false;
 	public static String apiKey = "";
+	public static boolean force = false;
 
     /**
      * Example "java -jar Luzanky Thunderhorn"
@@ -20,6 +21,9 @@ public class Main {
 				}
 				if (arg.contains("-upload")) {
 					sshUpload = true;
+				}
+				if (arg.contains("-force")) {
+					force = true;
 				}
 			}
 		}

@@ -36,7 +36,6 @@ public class Generator {
 	public static String guildName = "Luzanky";
 	public static String realm = "Thunderhorn";
 	private final int ILVL = 500;
-	private boolean forceUpdate = false;
 
 	private Dao<cz.kamenitxan.raiders.dataHolders.Character, String> dao = null;
 
@@ -78,11 +77,11 @@ public class Generator {
      */
 	public void start(String[] args) {
 		if (args.length != 0) {
-			guildName = args[0];
-			realm = args[1];
-			if (args[2].equals("force")) {
-				forceUpdate = true;
+			if (!args[0].contains("-")) {
+				guildName = args[0];
+				realm = args[1];
 			}
+
 		}
 		queryGuild();
 		getData();
@@ -147,7 +146,7 @@ public class Generator {
 		if (jsonCharacter.getInt("level") == 100) {
 			try {
 				if (!dao.idExists(jsonCharacter.getString("name"))) {
-					final Character character = new Character(realm, jsonCharacter.getString("name"), rank);
+					final Character character = new Character(jsonCharacter.getString("realm"), jsonCharacter.getString("name"), rank);
 					dao.createIfNotExists(character);
 				}
 			} catch (SQLException e) {
@@ -216,7 +215,7 @@ public class Generator {
 		JsonReader jsonReader = Json.createReader(is);
 		JsonObject jsonObject = jsonReader.readObject();
 		final long lastModified = jsonObject.getJsonNumber("lastModified").longValue();
-		if (lastModified != character.getLastModified() || forceUpdate) {
+		if (lastModified != character.getLastModified() || Main.force) {
 			//System.out.println(character.getName() + " aktualizovnán");
 			is = null;
 			//System.out.println(character.getLastModified() + " teď: " + lastModified);
@@ -438,7 +437,8 @@ public class Generator {
 			html.style().raw(".table-striped>tbody>tr:nth-child(odd) {background-color: rgb(28, 28, 28) !important;}" +
 							 ".table {width: auto;} .role {display: none;} td a {color: inherit}" +
 							 ".ano {width: 10px; height: 10px; background-color: green; display: inline-block;} " +
-					 	 	 ".ne {width: 10px; height: 10px; background-color: red; display: inline-block;}").end();
+					 	 	 ".ne {width: 10px; height: 10px; background-color: red; display: inline-block;}" +
+							 ".prof {float: right;}").end();
 		html.body().style("color: white; background-color: black;");
 			html.h1().text("Seznam raiderů Lužánek").end();
 			html.p().a().href("img/changelog.html").text("Changelog - seznam změn").endAll();
@@ -596,9 +596,20 @@ public class Generator {
 				+ "<td>" + altiLvl + "</td>"
 				+ "<td>" + lists.getRank(ch.getRank()) + "</td>")
 				+ "<td>" + "<a href=\"#\"class=\"toggle\"><img src=\"img/info.png\"></a>" + Audit.getAudit(ch)
-				+ "<span class=\"role\">" + ch.getActiveStatus() + "</span></td>"
+				+ "<span class=\"role\">" + ch.getActiveStatus() + "</span>" + getProffesionHtml(ch) +"</td>"
 				+ "</tr>\n" +
 				childRow;
+	}
+
+	private String getProffesionHtml(Character ch) {
+		String html = "";
+		if (ch.getPrimaryProf() != null) {
+			html += "<img class=\"prof\" src=\"img/" + ch.getPrimaryProf() + ".jpeg\" title=\"" + ch.getPrimaryProfLvl() + "\">";
+		}
+		if (ch.getSecondaryProf() != null) {
+			html += "<img class=\"prof\" src=\"img/" + ch.getSecondaryProf() + ".jpeg\" title=\"" + ch.getSecondaryProfLvl() + "\">";
+		}
+		return html;
 	}
 
     /**
